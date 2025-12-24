@@ -45,6 +45,10 @@ pub struct TaskCommand {
     /// category of the task
     #[arg(short, long)]
     pub category: Option<String>,
+    /// reminder days before due date to show task in today view,
+    /// defaults to 7 days when specified without value
+    #[arg(short = 'r', long, default_missing_value = "7", num_args = 0..=1)]
+    pub reminder: Option<i64>,
 }
 
 #[derive(Debug, Args)]
@@ -97,13 +101,16 @@ pub struct UpdateCommand {
     /// replace the content of the task/record
     #[arg(short='w', long)]
     pub content: Option<String>,
-    /// add to entry content in a newline 
+    /// add to entry content in a newline
     #[arg(short, long)]
     pub add_content: Option<String>,
     /// update status of the tasks,
     /// accept ongoing|done|cancelled|duplicate|suspended|pending
     #[arg(short, long, value_parser = parse_status)]
-    pub status: Option<u8>
+    pub status: Option<u8>,
+    /// set reminder days before due date to show in today view
+    #[arg(short = 'r', long)]
+    pub reminder: Option<i64>,
 }
 
 #[derive(Debug, Subcommand)]

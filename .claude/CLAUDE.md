@@ -62,8 +62,12 @@ Configuration (optional): `~/.config/tascli/config.json`
 ### Adding Items
 ```bash
 tascli task "description" [timestr] [-c category]
+tascli task "description" [timestr] -r        # With 7-day reminder
+tascli task "description" [timestr] -r 14     # With 14-day reminder
 tascli record "description" [-c category]
 ```
+
+**Reminder flag (-r):** Tasks appear in `/today` when within their reminder window, even if not yet due.
 
 ### Time Formats
 - Relative: `today`, `tomorrow`, `next week`, `in 3 days`

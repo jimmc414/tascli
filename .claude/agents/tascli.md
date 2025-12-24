@@ -45,8 +45,12 @@ If index is invalid:
 
 ### Adding Items
 - `tascli task "description" [timestr] [-c category]` - Add a task
+- `tascli task "description" [timestr] -r` - Add a task with 7-day reminder
+- `tascli task "description" [timestr] -r 14` - Add a task with 14-day reminder
 - `tascli record "description" [-c category] [-t timestr]` - Add a record
 - Recurring tasks: `tascli task "description" "daily 9am" -c work`
+
+**Reminder flag (-r):** Tasks with reminders appear in `/today` when within their reminder window, even if not yet due. Default is 7 days when `-r` is specified without a value.
 
 ### Listing Items
 - `tascli list task` - List open tasks

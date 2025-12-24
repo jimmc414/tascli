@@ -26,6 +26,9 @@ pub struct Item {
     // these records are generated when a recurring task is "done"
     pub recurring_task_id: Option<i64>,
     pub good_until: Option<i64>,
+    // reminder_days: number of days before due date to show task in "today" view
+    // Only set if user specifies -r flag; None means no early reminder
+    pub reminder_days: Option<i64>,
     // Runtime-only field applicable to recurring task, not persisted to db
     // Computed at application layer indicating if a recurring_task is completed.
     pub recurring_interval_complete: bool,
@@ -56,6 +59,7 @@ impl Item {
             human_schedule: None,
             recurring_task_id: None,
             good_until: None,
+            reminder_days: None,
             recurring_interval_complete: false,
         }
     }
@@ -121,6 +125,7 @@ impl Item {
             human_schedule: row.get("human_schedule")?,
             recurring_task_id: row.get("recurring_task_id")?,
             good_until: row.get("good_until")?,
+            reminder_days: row.get("reminder_days").ok(),
             recurring_interval_complete: false,
         })
     }

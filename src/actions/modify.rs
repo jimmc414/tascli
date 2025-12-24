@@ -195,6 +195,10 @@ pub fn handle_updatecmd(conn: &Connection, cmd: &UpdateCommand) -> Result<(), St
         item.status = status;
     }
 
+    if let Some(reminder) = cmd.reminder {
+        item.reminder_days = Some(reminder);
+    }
+
     update_item(conn, &item).map_err(|e| format!("Failed to update item: {:?}", e))?;
 
     let is_record = item.action == RECORD || item.action == RECURRING_TASK_RECORD;
@@ -333,6 +337,7 @@ mod tests {
             content: Some("reorganize garage thoroughly".to_string()),
             add_content: None,
             status: None,
+            reminder: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let updated_item = get_item(&conn, item_id).unwrap();
@@ -345,6 +350,7 @@ mod tests {
             content: None,
             add_content: Some("move stuff to basement".to_string()),
             status: None,
+            reminder: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let updated_item = get_item(&conn, item_id).unwrap();
@@ -360,6 +366,7 @@ mod tests {
             content: None,
             add_content: None,
             status: Some(3),
+            reminder: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let updated_item = get_item(&conn, item_id).unwrap();
@@ -372,6 +379,7 @@ mod tests {
             content: None,
             add_content: None,
             status: None,
+            reminder: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let got_item = get_item(&conn, item_id).unwrap();
@@ -435,6 +443,7 @@ mod tests {
             content: Some("Daily team sync".to_string()),
             add_content: None,
             status: None,
+            reminder: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_ok());
@@ -451,6 +460,7 @@ mod tests {
             content: None,
             add_content: None,
             status: None,
+            reminder: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_ok());
@@ -465,6 +475,7 @@ mod tests {
             content: None,
             add_content: None,
             status: Some(1),
+            reminder: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());
@@ -480,6 +491,7 @@ mod tests {
             content: None,
             add_content: Some("extra notes".to_string()),
             status: None,
+            reminder: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());
@@ -505,6 +517,7 @@ mod tests {
             content: None,
             add_content: None,
             status: None,
+            reminder: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());
@@ -523,6 +536,7 @@ mod tests {
             content: None,
             add_content: None,
             status: None,
+            reminder: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());

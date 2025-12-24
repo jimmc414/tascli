@@ -20,8 +20,8 @@ const VALID_ORDER_COLUMNS: &[&str] = &["id", "create_time", "target_time"];
 
 pub fn insert_item(conn: &Connection, item: &Item) -> Result<i64> {
     conn.execute(
-        "INSERT INTO items (action, category, content, create_time, target_time, cron_schedule, human_schedule, recurring_task_id, good_until)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        "INSERT INTO items (action, category, content, create_time, target_time, cron_schedule, human_schedule, recurring_task_id, good_until, reminder_days)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
         params![
             item.action,
             item.category,
@@ -31,7 +31,8 @@ pub fn insert_item(conn: &Connection, item: &Item) -> Result<i64> {
             item.cron_schedule,
             item.human_schedule,
             item.recurring_task_id,
-            item.good_until
+            item.good_until,
+            item.reminder_days
         ],
     )?;
 
@@ -54,8 +55,9 @@ pub fn update_item(conn: &Connection, item: &Item) -> Result<()> {
             cron_schedule = ?6,
             human_schedule = ?7,
             recurring_task_id = ?8,
-            good_until = ?9
-        WHERE id = ?10",
+            good_until = ?9,
+            reminder_days = ?10
+        WHERE id = ?11",
         params![
             item.category,
             item.content,
@@ -66,6 +68,7 @@ pub fn update_item(conn: &Connection, item: &Item) -> Result<()> {
             item.human_schedule,
             item.recurring_task_id,
             item.good_until,
+            item.reminder_days,
             item.id
         ],
     )?;

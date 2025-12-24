@@ -29,8 +29,9 @@ pub fn handle_taskcmd(conn: &Connection, cmd: &TaskCommand) -> Result<(), String
 
     match timestr::to_unix_epoch(&target_timestr) {
         Ok(target_time) => {
-            let new_task =
+            let mut new_task =
                 Item::with_target_time(TASK.to_string(), category, content, Some(target_time));
+            new_task.reminder_days = cmd.reminder;
             insert_item(conn, &new_task).map_err(|e| e.to_string())?;
 
             display::print_bold("Inserted Task:");
@@ -96,6 +97,7 @@ mod tests {
             content: String::from("complete testing of addition.rs"),
             category: None,
             timestr: None,
+            reminder: None,
         };
         let (conn, _temp_file) = get_test_conn();
         handle_taskcmd(&conn, &tc).unwrap();
@@ -112,6 +114,7 @@ mod tests {
             content: String::from("complete testing of addition.rs"),
             category: Some("fun".to_string()),
             timestr: Some("tomorrow".to_string()),
+            reminder: None,
         };
         let (conn, _temp_file) = get_test_conn();
         handle_taskcmd(&conn, &tc).unwrap();
@@ -161,6 +164,7 @@ mod tests {
             content: String::from("Daily standup"),
             category: Some("work".to_string()),
             timestr: Some("Daily 9AM".to_string()),
+            reminder: None,
         };
         handle_taskcmd(&conn, &daily).unwrap();
 
@@ -168,6 +172,7 @@ mod tests {
             content: String::from("Weekly meeting"),
             category: Some("meetings".to_string()),
             timestr: Some("Weekly Monday-Friday 2PM".to_string()),
+            reminder: None,
         };
         handle_taskcmd(&conn, &weekly).unwrap();
 
@@ -175,6 +180,7 @@ mod tests {
             content: String::from("Monthly review"),
             category: Some("admin".to_string()),
             timestr: Some("Monthly 1st".to_string()),
+            reminder: None,
         };
         handle_taskcmd(&conn, &monthly).unwrap();
 
@@ -206,6 +212,7 @@ mod tests {
             content: String::from("Finish report"),
             category: Some("work".to_string()),
             timestr: Some("tomorrow".to_string()),
+            reminder: None,
         };
         handle_taskcmd(&conn, &regular_task).unwrap();
 
@@ -213,6 +220,7 @@ mod tests {
             content: String::from("Check emails"),
             category: Some("work".to_string()),
             timestr: Some("Daily 9AM".to_string()),
+            reminder: None,
         };
         handle_taskcmd(&conn, &recurring_task).unwrap();
 
@@ -232,6 +240,7 @@ mod tests {
             content: String::from("Task"),
             category: None,
             timestr: Some("InvalidTimestr".to_string()),
+            reminder: None,
         };
         let (conn, _temp_file) = get_test_conn();
         let result = handle_taskcmd(&conn, &tc);

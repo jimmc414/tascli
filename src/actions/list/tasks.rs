@@ -194,15 +194,27 @@ fn mark_recurring_task_by_completion(
 
 fn query_tasks(conn: &Connection, cmd: &ListTaskCommand) -> Result<Vec<Item>, String> {
     let mut task_query = ItemQuery::new().with_action(TASK);
-    if let Some(t) = &cmd.timestr {
-        let target_time_before = timestr::to_unix_epoch(t)?;
-        task_query = task_query.with_target_time_max(target_time_before);
+    let now = Local::now().timestamp();
+
+    // Store the user's requested cutoff for post-filtering
+    let user_cutoff: Option<i64> = if let Some(t) = &cmd.timestr {
+        Some(timestr::to_unix_epoch(t)?)
     } else if let Some(days) = cmd.days {
-        let cutoff_timestamp = timestr::days_after_to_unix_epoch(days);
-        task_query = task_query.with_target_time_max(cutoff_timestamp);
+        Some(timestr::days_after_to_unix_epoch(days))
+    } else {
+        None
+    };
+
+    // For reminder window support, query with extended range if cutoff is set
+    // We fetch tasks due up to 30 days out to catch tasks with reminders
+    if let Some(cutoff) = user_cutoff {
+        // Extend query to catch tasks with reminders (max 30 days extension)
+        let extended_cutoff = cutoff + (30 * 86400);
+        task_query = task_query.with_target_time_max(extended_cutoff);
     }
+
     if !cmd.overdue {
-        task_query = task_query.with_target_time_min(Local::now().timestamp());
+        task_query = task_query.with_target_time_min(now);
     }
     if let Some(cat) = &cmd.category {
         task_query = task_query.with_category(cat);
@@ -233,9 +245,37 @@ fn query_tasks(conn: &Connection, cmd: &ListTaskCommand) -> Result<Vec<Item>, St
         }
     }
     task_query = task_query.with_offset(offset);
-    task_query = task_query.with_limit(cmd.limit);
+    // Query more than needed to account for filtering
+    task_query = task_query.with_limit(cmd.limit * 2);
     task_query = task_query.with_order_by(TARGET_TIME_COL);
-    query_items(conn, &task_query).map_err(|e| e.to_string())
+
+    let mut tasks = query_items(conn, &task_query).map_err(|e| e.to_string())?;
+
+    // Post-filter: include tasks that are either:
+    // 1. Due within the user's requested window, OR
+    // 2. Have reminder_days set and are within their reminder window
+    if let Some(cutoff) = user_cutoff {
+        tasks.retain(|task| {
+            if let Some(target_time) = task.target_time {
+                // Task is due within requested window
+                if target_time <= cutoff {
+                    return true;
+                }
+                // Task has reminder and is within reminder window
+                if let Some(reminder_days) = task.reminder_days {
+                    let reminder_start = target_time - (reminder_days * 86400);
+                    if now >= reminder_start {
+                        return true;
+                    }
+                }
+            }
+            false
+        });
+    }
+
+    // Truncate to requested limit
+    tasks.truncate(cmd.limit);
+    Ok(tasks)
 }
 
 #[cfg(test)]
