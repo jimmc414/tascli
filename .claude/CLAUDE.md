@@ -19,6 +19,7 @@ brew tap Aperocky/tascli && brew install tascli
 
 | Command | Purpose | Example |
 |---------|---------|---------|
+| `/today` | Today's tasks + overdue | Quick daily view |
 | `/tasks` | Show open tasks | Overview of today/week |
 | `/task` | Quick add | `/task review PR tomorrow` |
 | `/done` | Mark complete | `/done 1` |
