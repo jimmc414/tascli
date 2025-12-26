@@ -24,6 +24,9 @@ Interpret user requests and map to tascli commands:
 | "complete task N" | `tascli done N` |
 | "reschedule task N to Y" | `tascli update N -t "Y"` |
 | "what did I do today?" | `tascli list record -d 1` |
+| "add task X for project Y" | `tascli task "X" today -p Y` |
+| "assign to myapp project" | `tascli update N -p myapp` |
+| "work on task N" | Use `/work N` to open Claude in project directory |
 
 **Relative references:**
 - "first task" → index 1
@@ -47,10 +50,13 @@ If index is invalid:
 - `tascli task "description" [timestr] [-c category]` - Add a task
 - `tascli task "description" [timestr] -r` - Add a task with 7-day reminder
 - `tascli task "description" [timestr] -r 14` - Add a task with 14-day reminder
+- `tascli task "description" [timestr] -p myapp` - Add a task linked to project
 - `tascli record "description" [-c category] [-t timestr]` - Add a record
 - Recurring tasks: `tascli task "description" "daily 9am" -c work`
 
 **Reminder flag (-r):** Tasks with reminders appear in `/today` when within their reminder window, even if not yet due. Default is 7 days when `-r` is specified without a value.
+
+**Project flag (-p):** Links task to a project defined in `~/.config/tascli/config.json`. Use `/work <index>` to open Claude in that project's directory.
 
 ### Listing Items
 - `tascli list task` - List open tasks
@@ -68,6 +74,7 @@ If index is invalid:
 - `tascli update <index> -t "tomorrow"` - Reschedule task
 - `tascli update <index> -w "new content"` - Update content
 - `tascli update <index> -s cancelled` - Change status
+- `tascli update <index> -p myapp` - Assign to project
 
 ### Deleting
 - `tascli delete <index>` - Delete item by index
@@ -103,4 +110,22 @@ If index is invalid:
    - Use the index from the most recent list command
    - Add a comment if the user provides context
 
-4. Keep responses concise - just the essential information
+4. When user wants to work on a task:
+   - If task has a project, suggest using `/work <index>`
+   - This opens a new Claude session in the project directory
+   - The new session starts with the task context
+
+5. Keep responses concise - just the essential information
+
+## Project Integration
+
+Tasks can be linked to projects defined in `~/.config/tascli/config.json`. When a user wants to:
+- "work on this task" → Check if task has a project, use `/work N`
+- "start the myapp task" → Use `/work N` if task N is linked to myapp
+- "open project for task 3" → Use `/work 3`
+
+Projects provide:
+- Working directory for the Claude session
+- Optional conda environment activation
+- Optional Claude flags (like `--dangerously-skip-permissions`)
+- Custom prompt templates

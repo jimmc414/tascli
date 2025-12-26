@@ -1,7 +1,7 @@
 # Checkpoint: tascli Project State
 
 **Date:** 2025-12-26
-**Last Commit:** `0a0257d` - feat: add project field to tasks
+**Last Commit:** `3520b1e` - feat: add /work command for project sessions
 
 ---
 
@@ -12,15 +12,19 @@
 - Enhanced tascli agent with natural language understanding
 - Updated CLAUDE.md documentation
 
-### 2. Reminder Window Feature
+### 2. Reminder Window Feature (v0.10.3)
 - Added `-r` flag for tasks (schema v3)
 - Tasks with reminders appear in `/today` within their reminder window
 - Default 7 days when `-r` specified without value
-- All tests passing (62/62)
 
-### 3. Spawning Claude Sessions (Proof of Concept)
-**Successfully proven we can spawn new Claude Code sessions from within a session.**
+### 3. Project Association & /work Command (v0.11.0)
+- **Schema v4** - Added `project` column to items table
+- **Config extension** - Added `projects` section with path, conda_env, claude_flags, prompt_template
+- **CLI** - Added `-p` flag to TaskCommand and UpdateCommand
+- **Path utility** - `src/utils/path.rs` for Linux→Windows path conversion
+- **`/work` command** - Claude command that spawns sessions in project directories
 
+### 4. Spawning Claude Sessions
 **Working command template:**
 ```bash
 /init /mnt/c/Windows/System32/cmd.exe /c "wt.exe -p Ubuntu -d C:\windows\path wsl.exe -e bash -c \"export PATH=\$HOME/.local/bin:\$PATH && claude\""
@@ -44,19 +48,15 @@
 
 ---
 
-## Next Task: Implement `/work` Command
+## Usage
 
-**Goal:** Add project-aware task spawning so `/work 3` opens Claude in the task's project directory.
+```bash
+# Add task with project
+tascli task "Fix login bug" friday -p myapp
 
-**Plan file:** `.claude/plans/work-command-implementation.md`
-
-### Summary of Implementation:
-
-1. **Config extension** - Add `projects` section to `~/.config/tascli/config.json`
-2. **Schema v4** - Add `project` column to items table
-3. **CLI** - Add `-p` flag to TaskCommand and UpdateCommand
-4. **Path conversion** - Linux path → Windows path utility
-5. **`/work` command** - Claude command that spawns sessions
+# In Claude Code, open session in project directory
+/work 3
+```
 
 ### Config Structure:
 ```json
@@ -66,37 +66,43 @@
     "myapp": {
       "path": "/mnt/c/python/myapp",
       "conda_env": "myapp-env",
-      "claude_flags": "--dangerously-skip-permissions",
-      "prompt_template": null
+      "claude_flags": "--dangerously-skip-permissions"
     }
   }
 }
 ```
 
-### Usage:
-```bash
-tascli task "Fix bug" friday -p myapp
-/work 1  # Opens Claude in /mnt/c/python/myapp
-```
+---
+
+## Files Modified
+
+**Rust Source (project feature):**
+- `src/config/mod.rs` - ProjectConfig struct, helper functions
+- `src/db/conn.rs` - Schema v4, project column migration
+- `src/db/item.rs` - Added project field
+- `src/db/crud.rs` - Updated INSERT/UPDATE for project
+- `src/args/parser.rs` - Added -p flag
+- `src/actions/addition.rs` - Project validation and assignment
+- `src/actions/modify.rs` - Project update handling
+- `src/utils/mod.rs` - New utils module
+- `src/utils/path.rs` - Path conversion utilities
+- `src/main.rs` - Include utils module
+
+**Claude Code Integration:**
+- `.claude/CLAUDE.md` - Full documentation with project config
+- `.claude/agents/tascli.md` - Project patterns and /work capability
+- `.claude/commands/work.md` - New /work command
+- `.claude/commands/task.md` - Added -p flag examples
+
+**User Documentation:**
+- `README.md` - Project feature, configuration, Claude Code section
+- `CHANGELOG.md` - v0.10.3 and v0.11.0 entries
 
 ---
 
-## Files Modified This Session
+## Test Status
 
-- `.claude/CLAUDE.md` - Updated with quick commands
-- `.claude/agents/tascli.md` - Enhanced with natural language + reminder docs
-- `.claude/commands/today.md` - New command
-- `.claude/commands/tasks.md` - New command
-- `.claude/commands/task.md` - New command
-- `.claude/commands/done.md` - New command
-- `.claude/commands/overdue.md` - New command
-- `src/db/conn.rs` - Schema v3, reminder_days column
-- `src/db/item.rs` - Added reminder_days field
-- `src/db/crud.rs` - Updated INSERT/UPDATE for reminder_days
-- `src/args/parser.rs` - Added -r flag
-- `src/actions/addition.rs` - Handle reminder on task creation
-- `src/actions/modify.rs` - Handle reminder on task update
-- `src/actions/list/tasks.rs` - Reminder window filtering
+All 65 tests passing (includes 3 new path utility tests).
 
 ---
 
@@ -110,9 +116,3 @@ appendWindowsPath = false
 ```
 
 The `fmask=111` in automount options strips execute bits, which is why we use `/init` as a workaround.
-
----
-
-## Test Status
-
-All 62 tests passing as of last commit.

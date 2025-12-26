@@ -33,6 +33,12 @@ tascli task "Do taxes" 4/15
 
 # With category
 tascli task -c work "Read emails" week
+
+# With reminder (shows in today view 7 days before due)
+tascli task "Quarterly review" "next month" -r
+
+# With project association (for Claude Code integration)
+tascli task "Fix login bug" friday -p myapp
 ```
 
 Create recurring tasks:
@@ -174,15 +180,52 @@ Recurring Formats (schedules) are applicable to tasks:
 
 ### Configuration
 
-If storing the db file in location other than `~/.local/share/tascli/tascli.db` is preferred, create a config file:
+Create a config file at `~/.config/tascli/config.json` to customize settings:
 
-```
+```json
 {
-    "data_dir": "/where/you/want/it"
+    "data_dir": "/where/you/want/it",
+    "terminal_profile": "Ubuntu",
+    "projects": {
+        "myapp": {
+            "path": "/mnt/c/python/myapp",
+            "conda_env": "myapp-env",
+            "claude_flags": "--dangerously-skip-permissions"
+        },
+        "tascli": {
+            "path": "/mnt/c/python/tascli"
+        }
+    }
 }
 ```
 
-at `~/.config/tascli/config.json` to adjust the location of the stored file. Note, if you already have existing tasks, you may want to move/copy the db file there first.
+**Configuration options:**
+- `data_dir`: Custom location for the SQLite database (default: `~/.local/share/tascli/`)
+- `terminal_profile`: Windows Terminal profile name for `/work` command (default: "Ubuntu")
+- `projects`: Project definitions for the `-p` flag and `/work` command
+  - `path`: Linux path to project directory (required)
+  - `conda_env`: Conda environment to activate (optional)
+  - `claude_flags`: Additional Claude CLI flags (optional)
+  - `prompt_template`: Custom prompt template using `{content}` (optional)
+
+Note: If you already have existing tasks, move/copy the db file before changing `data_dir`.
+
+### Claude Code Integration
+
+tascli integrates with Claude Code for AI-assisted development workflows:
+
+```bash
+# Add task with project association
+tascli task "Fix login bug" friday -p myapp
+
+# In Claude Code, use /work to open a new session in the project directory
+/work 3  # Opens Claude in myapp's directory with task context
+```
+
+See `.claude/CLAUDE.md` for full Claude Code integration documentation including:
+- Quick commands (`/today`, `/tasks`, `/task`, `/done`, `/work`, etc.)
+- Natural language task management via the tascli agent
+- Project-aware development sessions
 
 ### Help
 
@@ -205,15 +248,17 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 aperocky@~$ tascli task -h
-add task with end time
+add task
 
 Usage: tascli task [OPTIONS] <CONTENT> [TIMESTR]
 
 Arguments:
-  <CONTENT>  Description of the task
-  [TIMESTR]  Time the task is due, default to EOD
+  <CONTENT>  description of the task
+  [TIMESTR]  time the task is due for completion, default to EOD
 
 Options:
-  -c, --category <CATEGORY>  Category of the task
-  -h, --help                 Print help
+  -c, --category <CATEGORY>    category of the task
+  -r, --reminder [<REMINDER>]  reminder days before due date (default: 7)
+  -p, --project <PROJECT>      project name (must be defined in config)
+  -h, --help                   Print help
 ```

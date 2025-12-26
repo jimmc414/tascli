@@ -1,5 +1,19 @@
 # Changelog
 
+### v0.11.0
+- ✨ Add project association for tasks with `-p project` flag
+- ✨ Add `/work` command for Claude Code to open sessions in project directories
+- ✨ Extended config with `terminal_profile` and `projects` section
+- ✨ Add path conversion utility for WSL Linux→Windows paths
+- 📝 Full Claude Code integration documentation
+
+### v0.10.3
+- ✨ Add reminder window feature with `-r` flag for tasks
+- ✨ Tasks with reminders appear in `/today` within their reminder window
+- ✨ Default 7 days when `-r` is specified without value
+- ✨ Add Claude Code quick commands (`/today`, `/tasks`, `/task`, `/done`, `/overdue`)
+- ✨ Enhanced tascli agent with natural language understanding
+
 ### v0.10.2
 - 🐛 Fix bug where pagination do not continue correctly from recurring after filtering and from recurring to regular tasks
 - 📝 Minor readme and help string update

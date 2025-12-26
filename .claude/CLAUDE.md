@@ -37,6 +37,9 @@ Just talk to Claude. The tascli agent understands:
 - "Reschedule task 2 to next week"
 - "What did I complete today?"
 - "Show me everything overdue"
+- "Add a task for the myapp project"
+- "Assign task 2 to tascli project"
+- "Work on the first task" (uses `/work` if task has a project)
 
 ## Agent: tascli
 
@@ -51,6 +54,8 @@ Automatically invoked when you mention tasks, reminders, todo, deadlines, or sch
 - List and filter by category, status, or date
 - Mark tasks complete with optional notes
 - Reschedule or cancel tasks
+- Link tasks to projects for `/work` command
+- Open Claude sessions in project directories
 
 ## Data Storage
 
@@ -95,6 +100,7 @@ tascli done <index>                    # Complete task
 tascli done <index> -c "note"          # Complete with comment
 tascli update <index> -t "tomorrow"    # Reschedule
 tascli update <index> -s cancelled     # Change status
+tascli update <index> -p myapp         # Assign to project
 tascli delete <index>                  # Delete item
 ```
 
