@@ -49,6 +49,9 @@ pub struct TaskCommand {
     /// defaults to 7 days when specified without value
     #[arg(short = 'r', long, default_missing_value = "7", num_args = 0..=1)]
     pub reminder: Option<i64>,
+    /// project name (must be defined in ~/.config/tascli/config.json)
+    #[arg(short = 'p', long)]
+    pub project: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -111,6 +114,9 @@ pub struct UpdateCommand {
     /// set reminder days before due date to show in today view
     #[arg(short = 'r', long)]
     pub reminder: Option<i64>,
+    /// update project association (must be defined in config)
+    #[arg(short = 'p', long)]
+    pub project: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]

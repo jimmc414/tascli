@@ -4,7 +4,7 @@ use crate::config::get_data_path;
 
 // Going forward, all schema changes require toggling
 // this DB_VERSION to a higher number.
-const SCHEMA_VERSION: i32 = 3;
+const SCHEMA_VERSION: i32 = 4;
 
 pub fn init_table(conn: &Connection) -> Result<(), rusqlite::Error> {
     let current_version: i32 = conn.query_row("PRAGMA user_version", [], |row| row.get(0))?;
@@ -34,7 +34,8 @@ pub fn init_table(conn: &Connection) -> Result<(), rusqlite::Error> {
             human_schedule TEXT,
             recurring_task_id INTEGER,
             good_until INTEGER,
-            reminder_days INTEGER
+            reminder_days INTEGER,
+            project TEXT
         )",
         [],
     )?;
@@ -82,6 +83,11 @@ pub fn init_table(conn: &Connection) -> Result<(), rusqlite::Error> {
     // Migrate from version 2 to 3 - add reminder_days column for early task reminders
     if current_version < 3 && current_version > 0 {
         conn.execute("ALTER TABLE items ADD COLUMN reminder_days INTEGER", [])?;
+    }
+
+    // Migrate from version 3 to 4 - add project column for project association
+    if current_version < 4 && current_version > 0 {
+        conn.execute("ALTER TABLE items ADD COLUMN project TEXT", [])?;
     }
 
     conn.execute(

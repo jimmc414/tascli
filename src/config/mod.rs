@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs,
     path::PathBuf,
 };
@@ -9,11 +10,29 @@ const DB_NAME: &str = "tascli.db";
 const DEFAULT_DATA_DIR: &[&str] = &[".local", "share", "tascli"];
 const CONFIG_PATH: &[&str] = &[".config", "tascli", "config.json"];
 
+#[derive(Default, DeJson, Clone)]
+pub struct ProjectConfig {
+    #[nserde(default)]
+    pub path: String,
+    #[nserde(default)]
+    pub conda_env: Option<String>,
+    #[nserde(default)]
+    pub claude_flags: Option<String>,
+    #[nserde(default)]
+    pub prompt_template: Option<String>,
+}
+
 #[derive(Default, DeJson)]
 pub struct Config {
     /// Only supports full path.
     #[nserde(default)]
     pub data_dir: String,
+    /// Terminal profile name for Windows Terminal (default: Ubuntu)
+    #[nserde(default)]
+    pub terminal_profile: Option<String>,
+    /// Project configurations keyed by name
+    #[nserde(default)]
+    pub projects: Option<HashMap<String, ProjectConfig>>,
 }
 
 pub fn get_data_path() -> Result<PathBuf, String> {
@@ -46,6 +65,39 @@ fn get_config_data_dir(home_dir: PathBuf) -> Option<String> {
     } else {
         Some(config.data_dir)
     }
+}
+
+/// Load the full config from ~/.config/tascli/config.json
+pub fn load_config() -> Option<Config> {
+    let home_dir = home::home_dir()?;
+    let config_path = CONFIG_PATH.iter().fold(home_dir, |p, d| p.join(d));
+    if !config_path.exists() {
+        return None;
+    }
+    let config_content = fs::read_to_string(&config_path).ok()?;
+    DeJson::deserialize_json(&config_content).ok()
+}
+
+/// Get project configuration by name
+pub fn get_project(name: &str) -> Option<ProjectConfig> {
+    let config = load_config()?;
+    let projects = config.projects?;
+    projects.get(name).cloned()
+}
+
+/// Get terminal profile name (default: "Ubuntu")
+pub fn get_terminal_profile() -> String {
+    load_config()
+        .and_then(|c| c.terminal_profile)
+        .unwrap_or_else(|| "Ubuntu".to_string())
+}
+
+/// List all configured project names
+pub fn list_projects() -> Vec<String> {
+    load_config()
+        .and_then(|c| c.projects)
+        .map(|p| p.keys().cloned().collect())
+        .unwrap_or_default()
 }
 
 fn str_to_pathbuf(dir_path: String) -> Result<PathBuf, String> {

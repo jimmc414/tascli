@@ -29,6 +29,8 @@ pub struct Item {
     // reminder_days: number of days before due date to show task in "today" view
     // Only set if user specifies -r flag; None means no early reminder
     pub reminder_days: Option<i64>,
+    // project: name of project (must be defined in config) for /work command
+    pub project: Option<String>,
     // Runtime-only field applicable to recurring task, not persisted to db
     // Computed at application layer indicating if a recurring_task is completed.
     pub recurring_interval_complete: bool,
@@ -60,6 +62,7 @@ impl Item {
             recurring_task_id: None,
             good_until: None,
             reminder_days: None,
+            project: None,
             recurring_interval_complete: false,
         }
     }
@@ -126,6 +129,7 @@ impl Item {
             recurring_task_id: row.get("recurring_task_id")?,
             good_until: row.get("good_until")?,
             reminder_days: row.get("reminder_days").ok(),
+            project: row.get("project").ok(),
             recurring_interval_complete: false,
         })
     }

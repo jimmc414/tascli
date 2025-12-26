@@ -9,6 +9,7 @@ use crate::{
         },
         timestr,
     },
+    config::get_project,
     db::{
         crud::insert_item,
         item::{
@@ -27,11 +28,22 @@ pub fn handle_taskcmd(conn: &Connection, cmd: &TaskCommand) -> Result<(), String
         .clone()
         .unwrap_or_else(|| "default".to_string());
 
+    // Validate project exists in config if specified
+    if let Some(ref project_name) = cmd.project {
+        if get_project(project_name).is_none() {
+            return Err(format!(
+                "Project '{}' not found in config. Add it to ~/.config/tascli/config.json",
+                project_name
+            ));
+        }
+    }
+
     match timestr::to_unix_epoch(&target_timestr) {
         Ok(target_time) => {
             let mut new_task =
                 Item::with_target_time(TASK.to_string(), category, content, Some(target_time));
             new_task.reminder_days = cmd.reminder;
+            new_task.project = cmd.project.clone();
             insert_item(conn, &new_task).map_err(|e| e.to_string())?;
 
             display::print_bold("Inserted Task:");
@@ -98,6 +110,7 @@ mod tests {
             category: None,
             timestr: None,
             reminder: None,
+            project: None,
         };
         let (conn, _temp_file) = get_test_conn();
         handle_taskcmd(&conn, &tc).unwrap();
@@ -115,6 +128,7 @@ mod tests {
             category: Some("fun".to_string()),
             timestr: Some("tomorrow".to_string()),
             reminder: None,
+            project: None,
         };
         let (conn, _temp_file) = get_test_conn();
         handle_taskcmd(&conn, &tc).unwrap();
@@ -165,6 +179,7 @@ mod tests {
             category: Some("work".to_string()),
             timestr: Some("Daily 9AM".to_string()),
             reminder: None,
+            project: None,
         };
         handle_taskcmd(&conn, &daily).unwrap();
 
@@ -173,6 +188,7 @@ mod tests {
             category: Some("meetings".to_string()),
             timestr: Some("Weekly Monday-Friday 2PM".to_string()),
             reminder: None,
+            project: None,
         };
         handle_taskcmd(&conn, &weekly).unwrap();
 
@@ -181,6 +197,7 @@ mod tests {
             category: Some("admin".to_string()),
             timestr: Some("Monthly 1st".to_string()),
             reminder: None,
+            project: None,
         };
         handle_taskcmd(&conn, &monthly).unwrap();
 
@@ -213,6 +230,7 @@ mod tests {
             category: Some("work".to_string()),
             timestr: Some("tomorrow".to_string()),
             reminder: None,
+            project: None,
         };
         handle_taskcmd(&conn, &regular_task).unwrap();
 
@@ -221,6 +239,7 @@ mod tests {
             category: Some("work".to_string()),
             timestr: Some("Daily 9AM".to_string()),
             reminder: None,
+            project: None,
         };
         handle_taskcmd(&conn, &recurring_task).unwrap();
 
@@ -241,6 +260,7 @@ mod tests {
             category: None,
             timestr: Some("InvalidTimestr".to_string()),
             reminder: None,
+            project: None,
         };
         let (conn, _temp_file) = get_test_conn();
         let result = handle_taskcmd(&conn, &tc);

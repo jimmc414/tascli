@@ -16,6 +16,7 @@ use crate::{
         },
         timestr,
     },
+    config::get_project,
     db::{
         cache,
         crud::{
@@ -199,6 +200,16 @@ pub fn handle_updatecmd(conn: &Connection, cmd: &UpdateCommand) -> Result<(), St
         item.reminder_days = Some(reminder);
     }
 
+    if let Some(ref project) = cmd.project {
+        if get_project(project).is_none() {
+            return Err(format!(
+                "Project '{}' not found in config. Add it to ~/.config/tascli/config.json",
+                project
+            ));
+        }
+        item.project = Some(project.clone());
+    }
+
     update_item(conn, &item).map_err(|e| format!("Failed to update item: {:?}", e))?;
 
     let is_record = item.action == RECORD || item.action == RECURRING_TASK_RECORD;
@@ -338,6 +349,7 @@ mod tests {
             add_content: None,
             status: None,
             reminder: None,
+            project: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let updated_item = get_item(&conn, item_id).unwrap();
@@ -351,6 +363,7 @@ mod tests {
             add_content: Some("move stuff to basement".to_string()),
             status: None,
             reminder: None,
+            project: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let updated_item = get_item(&conn, item_id).unwrap();
@@ -367,6 +380,7 @@ mod tests {
             add_content: None,
             status: Some(3),
             reminder: None,
+            project: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let updated_item = get_item(&conn, item_id).unwrap();
@@ -380,6 +394,7 @@ mod tests {
             add_content: None,
             status: None,
             reminder: None,
+            project: None,
         };
         handle_updatecmd(&conn, &update_cmd).unwrap();
         let got_item = get_item(&conn, item_id).unwrap();
@@ -444,6 +459,7 @@ mod tests {
             add_content: None,
             status: None,
             reminder: None,
+            project: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_ok());
@@ -461,6 +477,7 @@ mod tests {
             add_content: None,
             status: None,
             reminder: None,
+            project: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_ok());
@@ -476,6 +493,7 @@ mod tests {
             add_content: None,
             status: Some(1),
             reminder: None,
+            project: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());
@@ -492,6 +510,7 @@ mod tests {
             add_content: Some("extra notes".to_string()),
             status: None,
             reminder: None,
+            project: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());
@@ -518,6 +537,7 @@ mod tests {
             add_content: None,
             status: None,
             reminder: None,
+            project: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());
@@ -537,6 +557,7 @@ mod tests {
             add_content: None,
             status: None,
             reminder: None,
+            project: None,
         };
         let result = handle_updatecmd(&conn, &update_cmd);
         assert!(result.is_err());
