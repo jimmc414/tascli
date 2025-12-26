@@ -1,264 +1,201 @@
-# tascli
+# claude-task-manager
 
-[![Crates.io](https://img.shields.io/crates/v/tascli.svg)](https://crates.io/crates/tascli)
-[![tests](https://github.com/Aperocky/tascli/workflows/tests/badge.svg)](https://github.com/Aperocky/tascli/actions?query=workflow%3Atests)
-[![benchmark](https://github.com/Aperocky/tascli/workflows/benchmark/badge.svg)](https://github.com/Aperocky/tascli/actions?query=workflow%3Abenchmark)
-![Downloads](https://img.shields.io/crates/d/tascli.svg)
+**Claude-first task management for AI-assisted development workflows.**
 
-A *small (<2MB), simple, fast (<10ms), local* CLI tool for tracking tasks and records from unix terminal.
+[![Crates.io](https://img.shields.io/crates/v/claude-task-manager.svg)](https://crates.io/crates/claude-task-manager)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-Installation:
+A fast, local CLI that integrates seamlessly with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Manage tasks through natural language, spawn AI sessions in project directories, and keep your development workflow in sync with your task list.
 
-```bash
-cargo install tascli
-# or use brew
-brew tap Aperocky/tascli
-brew install tascli
-```
+## Why claude-task-manager?
 
-![tascli demo](demo/tascli.gif)
+- **Claude-first design** - Built for developers using Claude Code as their primary development tool
+- **Natural language** - Just talk: "Add a task to fix the login bug by Friday"
+- **Project-aware sessions** - `/work 3` opens Claude in the task's project directory
+- **Fast & local** - <2MB binary, <10ms response, SQLite storage
+- **No cloud dependencies** - Your tasks stay on your machine
 
-## Basic Usage
-
-Tasks and records are stored in `~/.local/share/tascli/tascli.db` (configurable) with `sqlite`.
-
-### Tasks
-
-Create tasks with deadlines:
-```bash
-# Basic tasks
-tascli task "Create readme" today
-tascli task "Publish package" tomorrow
-tascli task "Do taxes" 4/15
-
-# With category
-tascli task -c work "Read emails" week
-
-# With reminder (shows in today view 7 days before due)
-tascli task "Quarterly review" "next month" -r
-
-# With project association (for Claude Code integration)
-tascli task "Fix login bug" friday -p myapp
-```
-
-Create recurring tasks:
+## Installation
 
 ```bash
-tascli task "write diary" daily
-tascli task "mortgage payment" "monthly 17th"
+# From crates.io
+cargo install claude-task-manager
+
+# The CLI command is 'ctm'
+ctm task "My first task" today
 ```
 
-List tasks:
+## Quick Start with Claude Code
+
+Once installed, use these commands directly in Claude Code:
+
+| Command | What it does |
+|---------|--------------|
+| `/today` | Show today's tasks and anything overdue |
+| `/tasks` | Overview of open tasks |
+| `/task fix bug friday -p myapp` | Add task linked to a project |
+| `/done 1` | Mark task complete |
+| `/work 3` | Open Claude in task's project directory |
+
+Or just talk naturally:
+- "What do I need to do today?"
+- "Add a task to review the PR by tomorrow"
+- "Mark the first task done"
+- "Work on the login bug" (opens Claude in project directory)
+
+## Core Features
+
+### Task Management
+
 ```bash
-# List active tasks
-$ tascli list task
-```
-output:
-```
-Task List:
-----------------------------------------------------------------------------------------------
-| Index  | Category            | Content                               | Deadline            |
-----------------------------------------------------------------------------------------------
-| 1      | life (recurring)    | write diary                           | Today               |
-----------------------------------------------------------------------------------------------
-| 2      | tascli              | Add pagination capability for tascli  | Sunday              |
-|        |                     | list actions                          |                     |
-----------------------------------------------------------------------------------------------
-| 3      | tascli              | Add readme section on timestring      | Sunday              |
-|        |                     | format                                |                     |
-----------------------------------------------------------------------------------------------
-| 4      | life                | Do state taxes                        | Sunday              |
-----------------------------------------------------------------------------------------------
-| 5      | tascli              | Sort list output by time instead of   | Sunday              |
-|        |                     | internal id                           |                     |
-----------------------------------------------------------------------------------------------
-| 6      | tascli              | Fix length issue for unicode chars    | Sunday              |
-----------------------------------------------------------------------------------------------
-| 7      | life                | Two month pictures - follow the lead  | 4/23                |
-|        |                     | from the previous one month pictures  |                     |
-----------------------------------------------------------------------------------------------
+# Add tasks with flexible time formats
+ctm task "Ship feature" friday
+ctm task "Code review" tomorrow -c work
+ctm task "Quarterly planning" "next month" -r        # 7-day reminder
+ctm task "Fix auth bug" friday -p myapp              # Link to project
+
+# Recurring tasks
+ctm task "Standup notes" "weekday 9am"
+ctm task "Weekly review" "weekly friday"
+
+# List and manage
+ctm list task                    # Open tasks
+ctm list task --overdue          # Include overdue
+ctm done 1                       # Complete task
+ctm done 1 -c "Fixed in PR #42"  # Complete with note
+ctm update 2 -t "next week"      # Reschedule
 ```
 
-Complete tasks:
-```bash
-# Mark index 1 as done
-tascli done 1
-```
+### Project Integration
 
-Completing a task or a recurring tasks will generate a corresponding record.
-
-Search tasks:
-```bash
-tascli list task --search "rust"
-```
-
-List all tasks in `tascli` category (including completed)
-```bash
-tascli list task -s all -c tascli
-```
-
-Example output:
-```
-Task List:
-----------------------------------------------------------------------------------------------
-| Index  | Category            | Content                               | Deadline            |
-----------------------------------------------------------------------------------------------
-| 1      | baby (Recurring)    | Mix egg yolk milk for Rowan           | Daily (fulfilled)   |
-----------------------------------------------------------------------------------------------
-| 2      | tascli              | Fix addition and modification commands| Today (completed)   |
-|        |                     | output to have N/A for index          |                     |
-----------------------------------------------------------------------------------------------
-| 3      | tascli              | Insert guardrail against accidental   | Today (completed)   |
-|        |                     | valid syntax like 'task list' that is |                     |
-|        |                     | mistakenly made                       |                     |
-----------------------------------------------------------------------------------------------
-| 4      | tascli              | Create a gif for readme               | Today (completed)   |
-----------------------------------------------------------------------------------------------
-| 5      | tascli              | Add pagination capability for tascli  | Sunday              |
-|        |                     | list actions                          |                     |
-----------------------------------------------------------------------------------------------
-| 6      | tascli              | Add readme section on timestring      | Sunday              |
-|        |                     | format                                |                     |
-----------------------------------------------------------------------------------------------
-```
-
-### Records
-
-Create records (for tracking events):
-```bash
-# With current time
-tascli record -c feeding "100ML"
-
-# With specific time
-tascli record -c feeding -t 11:20AM "100ML"
-```
-
-List records:
-```bash
-# -d 1 stand for only get last 1 day of record
-tascli list record -d 1
-```
-
-Search records:
-```bash
-tascli list record --search "secret"
-```
-
-Example output:
-```
-Records List:
-----------------------------------------------------------------------------------------------
-| Index  | Category            | Content                               | Created At          |
-----------------------------------------------------------------------------------------------
-| 1      | feeding             | 110ML                                 | Today 1:00AM        |
-----------------------------------------------------------------------------------------------
-| 2      | feeding             | breastfeeding                         | Today 4:10AM        |
-----------------------------------------------------------------------------------------------
-| 3      | feeding             | 100ML                                 | Today 7:30AM        |
-----------------------------------------------------------------------------------------------
-| 3      | life (Recurring)    | write diary                           | Today 10:30AM       |
-----------------------------------------------------------------------------------------------
-| 4      | feeding             | 110ML                                 | Today 11:20AM       |
-----------------------------------------------------------------------------------------------
-```
-
-### Time Format
-
-This application accepts flexible time strings in various formats:
-
-- **Simple dates**: `today`, `tomorrow`, `yesterday`, `friday`, `eom` (end of month), `eoy` (end of year)
-- **Date formats**: `YYYY-MM-DD`, `MM/DD/YYYY`, `MM/DD` (current year)
-- **Time formats**: `HH:MM`, `3:00PM`, `3PM`
-- **Combined**: `2025-03-24 15:30`, `tomorrow 3PM`
-
-When only a date is provided, the time defaults to end of day (23:59:59). When only a time is provided, the date defaults to today.
-
-Recurring Formats (schedules) are applicable to tasks:
-
-- **Recurring Formats**: `daily`, `daily 9PM`, `weekly`, `weekly Friday 9AM`, `weekly mon-fri`, `monthly 1st`
-- **Recurring Formats (II)**: `every day`, `every 9PM`, `every monday`, `every 9th of the month`, `every 2/14`
-
-### Configuration
-
-Create a config file at `~/.config/tascli/config.json` to customize settings:
+Link tasks to projects for seamless context switching:
 
 ```json
+// ~/.config/ctm/config.json
 {
-    "data_dir": "/where/you/want/it",
-    "terminal_profile": "Ubuntu",
-    "projects": {
-        "myapp": {
-            "path": "/mnt/c/python/myapp",
-            "conda_env": "myapp-env",
-            "claude_flags": "--dangerously-skip-permissions"
-        },
-        "tascli": {
-            "path": "/mnt/c/python/tascli"
-        }
+  "terminal_profile": "Ubuntu",
+  "projects": {
+    "myapp": {
+      "path": "/mnt/c/projects/myapp",
+      "claude_flags": "--dangerously-skip-permissions"
+    },
+    "api": {
+      "path": "/mnt/c/projects/api",
+      "conda_env": "api-env"
     }
+  }
 }
 ```
 
-**Configuration options:**
-- `data_dir`: Custom location for the SQLite database (default: `~/.local/share/tascli/`)
-- `terminal_profile`: Windows Terminal profile name for `/work` command (default: "Ubuntu")
-- `projects`: Project definitions for the `-p` flag and `/work` command
-  - `path`: Linux path to project directory (required)
-  - `conda_env`: Conda environment to activate (optional)
-  - `claude_flags`: Additional Claude CLI flags (optional)
-  - `prompt_template`: Custom prompt template using `{content}` (optional)
+```bash
+# Add task with project
+ctm task "Implement OAuth" friday -p myapp
 
-Note: If you already have existing tasks, move/copy the db file before changing `data_dir`.
+# In Claude Code, open a session in the project directory
+/work 1
+```
 
-### Claude Code Integration
+The `/work` command spawns a new Claude Code session in the project's directory with the task context pre-loaded.
 
-tascli integrates with Claude Code for AI-assisted development workflows:
+### Records
+
+Track completed work and events:
 
 ```bash
-# Add task with project association
-tascli task "Fix login bug" friday -p myapp
-
-# In Claude Code, use /work to open a new session in the project directory
-/work 3  # Opens Claude in myapp's directory with task context
+ctm record "Deployed v2.1 to production"
+ctm record -c meetings "Sprint planning - decided on Q1 priorities"
+ctm list record -d 7    # Last 7 days
 ```
 
-See `.claude/CLAUDE.md` for full Claude Code integration documentation including:
-- Quick commands (`/today`, `/tasks`, `/task`, `/done`, `/work`, etc.)
-- Natural language task management via the tascli agent
-- Project-aware development sessions
+## Time Formats
 
-### Help
+| Format | Examples |
+|--------|----------|
+| Relative | `today`, `tomorrow`, `friday`, `next week` |
+| Absolute | `2025-01-15`, `jan 15`, `1/15` |
+| With time | `tomorrow 3pm`, `friday 9:00` |
+| Recurring | `daily 9am`, `weekday 9am`, `weekly monday`, `monthly 1st` |
+| Special | `eom` (end of month), `eoy` (end of year) |
 
-`tascli` uses `clap` for argument parsing, use `--help` to get help on all levels of this cli:
+## Configuration
+
+```json
+// ~/.config/ctm/config.json
+{
+  "data_dir": "/custom/path",           // Default: ~/.local/share/ctm/
+  "terminal_profile": "Ubuntu",         // Windows Terminal profile
+  "projects": {
+    "project-name": {
+      "path": "/path/to/project",       // Required
+      "conda_env": "env-name",          // Optional: activate conda env
+      "claude_flags": "--flag",         // Optional: Claude CLI flags
+      "prompt_template": "Work on: {content}"  // Optional: custom prompt
+    }
+  }
+}
+```
+
+## Claude Code Integration
+
+This tool is designed to work with Claude Code's agent system. The integration includes:
+
+- **tascli agent** (`.claude/agents/tascli.md`) - Natural language task management
+- **Quick commands** (`.claude/commands/`) - `/today`, `/tasks`, `/task`, `/done`, `/work`, etc.
+- **Project documentation** (`.claude/CLAUDE.md`) - Full integration guide
+
+When you mention tasks, todos, deadlines, or reminders in Claude Code, the tascli agent is automatically invoked.
+
+## Command Reference
 
 ```
-aperocky@~$ tascli -h
-Usage: tascli <COMMAND>
+ctm <COMMAND>
 
 Commands:
-  task    add task with end time
-  record  add record
-  done    Finish tasks
-  update  Update tasks or records wording/deadlines
-  delete  Delete Records or Tasks
-  list    list tasks or records
-  help    Print this message or the help of the given subcommand(s)
-
-Options:
-  -h, --help     Print help
-  -V, --version  Print version
-aperocky@~$ tascli task -h
-add task
-
-Usage: tascli task [OPTIONS] <CONTENT> [TIMESTR]
-
-Arguments:
-  <CONTENT>  description of the task
-  [TIMESTR]  time the task is due for completion, default to EOD
-
-Options:
-  -c, --category <CATEGORY>    category of the task
-  -r, --reminder [<REMINDER>]  reminder days before due date (default: 7)
-  -p, --project <PROJECT>      project name (must be defined in config)
-  -h, --help                   Print help
+  task    Add task with deadline
+  record  Add record/log entry
+  done    Mark task complete
+  update  Modify task or record
+  delete  Remove item
+  list    List tasks or records
+  help    Show help
 ```
+
+### Flags
+
+| Flag | Commands | Description |
+|------|----------|-------------|
+| `-c, --category` | task, record, update | Categorize items |
+| `-r, --reminder` | task | Days before due to show in `/today` (default: 7) |
+| `-p, --project` | task, update | Link to project for `/work` command |
+| `-t, --time` | update | Reschedule to new time |
+| `-s, --status` | list, update | Filter/set status |
+| `-d, --days` | list | Time range filter |
+| `--overdue` | list | Include overdue items |
+| `--search` | list | Search content |
+
+## Data Storage
+
+- **Database**: `~/.local/share/ctm/ctm.db` (SQLite)
+- **Config**: `~/.config/ctm/config.json` (optional)
+
+## Migration from tascli
+
+If you're migrating from the original tascli:
+
+```bash
+# Move your database
+mv ~/.local/share/tascli/tascli.db ~/.local/share/ctm/ctm.db
+
+# Update config location
+mv ~/.config/tascli/config.json ~/.config/ctm/config.json
+```
+
+The database schema is compatible.
+
+## License
+
+MIT
+
+## Credits
+
+Forked from [tascli](https://github.com/Aperocky/tascli) by Aperocky. Extended with Claude Code integration, project-aware sessions, and AI-first workflow features.

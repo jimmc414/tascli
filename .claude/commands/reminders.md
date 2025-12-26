@@ -1,4 +1,4 @@
-Use the tascli agent to show my daily task overview.
+Use the ctm agent to show my daily task overview.
 
 Show me:
 1. Any overdue tasks that need immediate attention

@@ -1,40 +1,31 @@
-# Checkpoint: tascli Project State
+# Checkpoint: claude-task-manager Project State
 
 **Date:** 2025-12-26
-**Last Commit:** `3520b1e` - feat: add /work command for project sessions
+**Last Commit:** Pending (rebrand to claude-task-manager)
 
 ---
 
 ## Completed Work This Session
 
-### 1. Claude-First Optimization
-- Added `/tasks`, `/task`, `/done`, `/overdue`, `/today` commands
-- Enhanced tascli agent with natural language understanding
-- Updated CLAUDE.md documentation
+### v0.12.0 - Rebrand to claude-task-manager
 
-### 2. Reminder Window Feature (v0.10.3)
-- Added `-r` flag for tasks (schema v3)
-- Tasks with reminders appear in `/today` within their reminder window
-- Default 7 days when `-r` specified without value
+**Project Renamed:**
+- Package name: `tascli` → `claude-task-manager`
+- CLI command: `tascli` → `ctm`
+- Data directory: `~/.local/share/tascli/` → `~/.local/share/ctm/`
+- Config directory: `~/.config/tascli/` → `~/.config/ctm/`
+- Database file: `tascli.db` → `ctm.db`
 
-### 3. Project Association & /work Command (v0.11.0)
-- **Schema v4** - Added `project` column to items table
-- **Config extension** - Added `projects` section with path, conda_env, claude_flags, prompt_template
-- **CLI** - Added `-p` flag to TaskCommand and UpdateCommand
-- **Path utility** - `src/utils/path.rs` for Linux→Windows path conversion
-- **`/work` command** - Claude command that spawns sessions in project directories
-
-### 4. Spawning Claude Sessions
-**Working command template:**
-```bash
-/init /mnt/c/Windows/System32/cmd.exe /c "wt.exe -p Ubuntu -d C:\windows\path wsl.exe -e bash -c \"export PATH=\$HOME/.local/bin:\$PATH && claude\""
-```
-
-**Key discoveries:**
-- `/init` bypasses WSL interop execute permission issues
-- `-p Ubuntu` uses the correct terminal profile
-- `export PATH=...` fixes "native installation not in PATH" warning
-- Can pass flags and prompts to claude
+**Files Updated:**
+- `Cargo.toml` - New name, description, repository, keywords, categories
+- `README.md` - Complete rewrite with Claude-first positioning
+- `CHANGELOG.md` - Added v0.12.0 rebrand entry
+- `src/config/mod.rs` - Updated paths
+- `.claude/CLAUDE.md` - Updated all references
+- `.claude/agents/ctm.md` - Renamed from tascli.md
+- `.claude/commands/*.md` - All updated to use `ctm`
+- `.claude/resume_prompt.md` - Updated
+- `.claude/checkpoint.md` - Updated
 
 ---
 
@@ -51,8 +42,11 @@
 ## Usage
 
 ```bash
+# Install
+cargo install claude-task-manager
+
 # Add task with project
-tascli task "Fix login bug" friday -p myapp
+ctm task "Fix login bug" friday -p myapp
 
 # In Claude Code, open session in project directory
 /work 3
@@ -74,45 +68,45 @@ tascli task "Fix login bug" friday -p myapp
 
 ---
 
-## Files Modified
+## Files Modified This Session
 
-**Rust Source (project feature):**
-- `src/config/mod.rs` - ProjectConfig struct, helper functions
-- `src/db/conn.rs` - Schema v4, project column migration
-- `src/db/item.rs` - Added project field
-- `src/db/crud.rs` - Updated INSERT/UPDATE for project
-- `src/args/parser.rs` - Added -p flag
-- `src/actions/addition.rs` - Project validation and assignment
-- `src/actions/modify.rs` - Project update handling
-- `src/utils/mod.rs` - New utils module
-- `src/utils/path.rs` - Path conversion utilities
-- `src/main.rs` - Include utils module
+**Rust Source:**
+- `src/config/mod.rs` - Updated DB_NAME, DEFAULT_DATA_DIR, CONFIG_PATH constants
+
+**Documentation:**
+- `Cargo.toml` - name, version, description, repository, keywords, categories, bin name
+- `README.md` - Complete rewrite
+- `CHANGELOG.md` - Added v0.12.0
 
 **Claude Code Integration:**
-- `.claude/CLAUDE.md` - Full documentation with project config
-- `.claude/agents/tascli.md` - Project patterns and /work capability
-- `.claude/commands/work.md` - New /work command
-- `.claude/commands/task.md` - Added -p flag examples
-
-**User Documentation:**
-- `README.md` - Project feature, configuration, Claude Code section
-- `CHANGELOG.md` - v0.10.3 and v0.11.0 entries
+- `.claude/CLAUDE.md` - Updated all references
+- `.claude/agents/ctm.md` - New (renamed from tascli.md)
+- `.claude/agents/tascli.md` - Deleted
+- `.claude/commands/today.md` - Updated
+- `.claude/commands/tasks.md` - Updated
+- `.claude/commands/task.md` - Updated
+- `.claude/commands/done.md` - Updated
+- `.claude/commands/overdue.md` - Updated
+- `.claude/commands/reminders.md` - Updated
+- `.claude/commands/work.md` - Updated
+- `.claude/resume_prompt.md` - Updated
+- `.claude/checkpoint.md` - Updated
 
 ---
 
 ## Test Status
 
-All 65 tests passing (includes 3 new path utility tests).
+All 65 tests should pass (need to verify after changes).
 
 ---
 
-## WSL Configuration Note
+## Migration Note
 
-Enabled Windows interop in `/etc/wsl.conf`:
-```ini
-[interop]
-enabled = true
-appendWindowsPath = false
+Users migrating from tascli should:
+```bash
+# Move database
+mv ~/.local/share/tascli/tascli.db ~/.local/share/ctm/ctm.db
+
+# Move config
+mv ~/.config/tascli/config.json ~/.config/ctm/config.json
 ```
-
-The `fmask=111` in automount options strips execute bits, which is why we use `/init` as a workaround.

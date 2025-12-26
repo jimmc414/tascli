@@ -14,7 +14,7 @@ The user provides a task index: `/work 3`
 
 2. Get the task list to find the task:
    ```bash
-   tascli list task -s open
+   ctm list task -s open
    ```
 
 3. Identify the task at the given index and check if it has a project field.
@@ -24,7 +24,7 @@ The user provides a task index: `/work 3`
    - Offer to work on it in the current session instead.
 
 5. If the task HAS a project:
-   a. Load the project configuration from `~/.config/tascli/config.json`
+   a. Load the project configuration from `~/.config/ctm/config.json`
    b. Extract project settings: path, conda_env, claude_flags, prompt_template
    c. Convert the Linux path to Windows path:
       - `/mnt/c/python/myapp` → `C:\python\myapp`
@@ -38,14 +38,14 @@ The user provides a task index: `/work 3`
 
 ## Config File Format
 
-The config file at `~/.config/tascli/config.json` should look like:
+The config file at `~/.config/ctm/config.json` should look like:
 
 ```json
 {
   "terminal_profile": "Ubuntu",
   "projects": {
-    "tascli": {
-      "path": "/mnt/c/python/tascli"
+    "ctm": {
+      "path": "/mnt/c/python/claude-task-manager"
     },
     "myapp": {
       "path": "/mnt/c/python/myapp",

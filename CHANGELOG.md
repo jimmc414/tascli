@@ -1,5 +1,15 @@
 # Changelog
 
+## claude-task-manager (forked from tascli)
+
+### v0.12.0 (Rebrand)
+- **Renamed project to claude-task-manager** (CLI command: `ctm`)
+- Emphasize Claude-first design and AI-assisted development workflows
+- Updated all paths from `~/.local/share/tascli/` to `~/.local/share/ctm/`
+- Updated config path from `~/.config/tascli/` to `~/.config/ctm/`
+- Added keywords and categories to Cargo.toml
+- Complete documentation rewrite with Claude Code focus
+
 ### v0.11.0
 - ✨ Add project association for tasks with `-p project` flag
 - ✨ Add `/work` command for Claude Code to open sessions in project directories

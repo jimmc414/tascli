@@ -6,9 +6,9 @@ use std::{
 
 use nanoserde::DeJson;
 
-const DB_NAME: &str = "tascli.db";
-const DEFAULT_DATA_DIR: &[&str] = &[".local", "share", "tascli"];
-const CONFIG_PATH: &[&str] = &[".config", "tascli", "config.json"];
+const DB_NAME: &str = "ctm.db";
+const DEFAULT_DATA_DIR: &[&str] = &[".local", "share", "ctm"];
+const CONFIG_PATH: &[&str] = &[".config", "ctm", "config.json"];
 
 #[derive(Default, DeJson, Clone)]
 pub struct ProjectConfig {
@@ -67,7 +67,7 @@ fn get_config_data_dir(home_dir: PathBuf) -> Option<String> {
     }
 }
 
-/// Load the full config from ~/.config/tascli/config.json
+/// Load the full config from ~/.config/ctm/config.json
 pub fn load_config() -> Option<Config> {
     let home_dir = home::home_dir()?;
     let config_path = CONFIG_PATH.iter().fold(home_dir, |p, d| p.join(d));

@@ -1,4 +1,4 @@
-# tascli - Claude Code Integration
+# claude-task-manager - Claude Code Integration
 
 Claude-first task management. Use natural language or quick commands.
 
@@ -6,13 +6,10 @@ Claude-first task management. Use natural language or quick commands.
 
 ```bash
 # From crates.io
-cargo install tascli
+cargo install claude-task-manager
 
-# Or from source
-cargo install --path .
-
-# Or via Homebrew
-brew tap Aperocky/tascli && brew install tascli
+# The CLI command is 'ctm'
+ctm task "My first task" today
 ```
 
 ## Quick Commands
@@ -29,7 +26,7 @@ brew tap Aperocky/tascli && brew install tascli
 
 ## Natural Language
 
-Just talk to Claude. The tascli agent understands:
+Just talk to Claude. The ctm agent understands:
 
 - "What tasks do I have today?"
 - "Add a task to review the PR by Friday"
@@ -41,9 +38,9 @@ Just talk to Claude. The tascli agent understands:
 - "Assign task 2 to tascli project"
 - "Work on the first task" (uses `/work` if task has a project)
 
-## Agent: tascli
+## Agent: ctm
 
-Location: `.claude/agents/tascli.md`
+Location: `.claude/agents/ctm.md`
 
 Automatically invoked when you mention tasks, reminders, todo, deadlines, or schedules.
 
@@ -59,19 +56,19 @@ Automatically invoked when you mention tasks, reminders, todo, deadlines, or sch
 
 ## Data Storage
 
-Tasks are stored in SQLite at `~/.local/share/tascli/tascli.db`
+Tasks are stored in SQLite at `~/.local/share/ctm/ctm.db`
 
-Configuration (optional): `~/.config/tascli/config.json`
+Configuration (optional): `~/.config/ctm/config.json`
 
 ## Quick Reference
 
 ### Adding Items
 ```bash
-tascli task "description" [timestr] [-c category]
-tascli task "description" [timestr] -r        # With 7-day reminder
-tascli task "description" [timestr] -r 14     # With 14-day reminder
-tascli task "description" [timestr] -p myapp  # With project association
-tascli record "description" [-c category]
+ctm task "description" [timestr] [-c category]
+ctm task "description" [timestr] -r        # With 7-day reminder
+ctm task "description" [timestr] -r 14     # With 14-day reminder
+ctm task "description" [timestr] -p myapp  # With project association
+ctm record "description" [-c category]
 ```
 
 **Reminder flag (-r):** Tasks appear in `/today` when within their reminder window, even if not yet due.
@@ -86,22 +83,22 @@ tascli record "description" [-c category]
 
 ### Listing
 ```bash
-tascli list task              # Open tasks
-tascli list task -s all       # All tasks
-tascli list task --overdue    # Include overdue
-tascli list task -d 7         # Due in 7 days
-tascli list task -c work      # Filter by category
-tascli list record -d 7       # Records from past week
+ctm list task              # Open tasks
+ctm list task -s all       # All tasks
+ctm list task --overdue    # Include overdue
+ctm list task -d 7         # Due in 7 days
+ctm list task -c work      # Filter by category
+ctm list record -d 7       # Records from past week
 ```
 
 ### Managing
 ```bash
-tascli done <index>                    # Complete task
-tascli done <index> -c "note"          # Complete with comment
-tascli update <index> -t "tomorrow"    # Reschedule
-tascli update <index> -s cancelled     # Change status
-tascli update <index> -p myapp         # Assign to project
-tascli delete <index>                  # Delete item
+ctm done <index>                    # Complete task
+ctm done <index> -c "note"          # Complete with comment
+ctm update <index> -t "tomorrow"    # Reschedule
+ctm update <index> -s cancelled     # Change status
+ctm update <index> -p myapp         # Assign to project
+ctm delete <index>                  # Delete item
 ```
 
 ### Status Values
@@ -119,14 +116,14 @@ tascli delete <index>                  # Delete item
 
 ## Project Configuration
 
-To use the `/work` command, define projects in `~/.config/tascli/config.json`:
+To use the `/work` command, define projects in `~/.config/ctm/config.json`:
 
 ```json
 {
   "terminal_profile": "Ubuntu",
   "projects": {
-    "tascli": {
-      "path": "/mnt/c/python/tascli"
+    "ctm": {
+      "path": "/mnt/c/python/claude-task-manager"
     },
     "myapp": {
       "path": "/mnt/c/python/myapp",
@@ -146,7 +143,7 @@ To use the `/work` command, define projects in `~/.config/tascli/config.json`:
 **Usage:**
 ```bash
 # Add task with project
-tascli task "Fix login bug" friday -p myapp
+ctm task "Fix login bug" friday -p myapp
 
 # Open Claude in project directory
 /work 3

@@ -1,13 +1,15 @@
 [package]
-name = "tascli"
-version = "0.10.2"
+name = "claude-task-manager"
+version = "0.12.0"
 edition = "2024"
-description = "A simple CLI tool for tracking tasks and records from terminal"
+description = "Claude-first task management CLI with AI-assisted development workflows"
 license = "MIT"
-repository = "https://github.com/Aperocky/tascli"
+repository = "https://github.com/jimmc414/claude-task-manager"
+keywords = ["claude", "task", "cli", "ai", "productivity"]
+categories = ["command-line-utilities", "development-tools"]
 
 [[bin]]
-name = "tascli"
+name = "ctm"
 path = "src/main.rs"
 
 [dependencies]
