@@ -1,112 +1,110 @@
-# Checkpoint: claude-task-manager Project State
+# Checkpoint: Multi-Tenant CTM Implementation
 
 **Date:** 2025-12-26
-**Last Commit:** Pending (rebrand to claude-task-manager)
+**Status:** Plan approved, ready to implement
 
 ---
 
-## Completed Work This Session
+## What Was Done This Session
 
-### v0.12.0 - Rebrand to claude-task-manager
+1. **Requirements Gathering** - Extensive Q&A session to define:
+   - Multi-tenant architecture (single DB, single manager model)
+   - Users, namespaces, roles (owner/admin/member/viewer)
+   - Task enhancements (priority, estimates, notes, assignee)
+   - GitHub integration (issues, PRs, commits)
+   - Reporting (team dashboard, workload, stats)
+   - Enhanced /work context for Claude sessions
 
-**Project Renamed:**
-- Package name: `tascli` → `claude-task-manager`
-- CLI command: `tascli` → `ctm`
-- Data directory: `~/.local/share/tascli/` → `~/.local/share/ctm/`
-- Config directory: `~/.config/tascli/` → `~/.config/ctm/`
-- Database file: `tascli.db` → `ctm.db`
+2. **Codebase Exploration** - Analyzed:
+   - Database layer (schema v4, migration patterns)
+   - CLI parsing (clap v4.5 derive-based)
+   - Display/reporting patterns (terminal tables only)
 
-**Files Updated:**
-- `Cargo.toml` - New name, description, repository, keywords, categories
-- `README.md` - Complete rewrite with Claude-first positioning
-- `CHANGELOG.md` - Added v0.12.0 rebrand entry
-- `src/config/mod.rs` - Updated paths
-- `.claude/CLAUDE.md` - Updated all references
-- `.claude/agents/ctm.md` - Renamed from tascli.md
-- `.claude/commands/*.md` - All updated to use `ctm`
-- `.claude/resume_prompt.md` - Updated
-- `.claude/checkpoint.md` - Updated
+3. **Implementation Plan Created** - 8 phases, ~25-30 hours total
+   - Plan saved to: `/home/jim/.claude/plans/modular-fluttering-aurora.md`
 
 ---
 
-## Current Schema Version
+## Key Decisions Made
 
-**Version 4** with columns:
+| Decision | Choice |
+|----------|--------|
+| Database model | Single DB, multi-tenant |
+| User model | Single manager tracking team |
+| Identity resolution | --as flag → CTM_USER env → config → system $USER |
+| First run | Auto-setup (create user + default namespace) |
+| Task ownership | owner_id (accountable) + assignee_id (working on it) |
+| Roles | Per-namespace (owner/admin/member/viewer) |
+| GitHub integration | Use `gh` CLI wrapper (not HTTP API) |
+| Future-proofing | Design for concurrent access later |
+
+---
+
+## Implementation Phases
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| 1 | Schema v5 Migration | Not started |
+| 2 | Identity Context System | Not started |
+| 3 | User/Namespace Commands | Not started |
+| 4 | Task Enhancements | Not started |
+| 5 | Notes/Show/Claim/Link | Not started |
+| 6 | Reporting Commands | Not started |
+| 7 | GitHub Integration | Not started |
+| 8 | /work + /standup | Not started |
+
+---
+
+## Schema v5 - New Tables
+
+```sql
+users (id, name, display_name, created_at, created_by)
+namespaces (id, name, description, created_at, created_by)
+user_namespaces (user_id, namespace_id, role, created_at)
+task_links (id, item_id, link_type, reference, title, created_at, created_by)
+task_notes (id, item_id, content, created_at, created_by)
+audit_log (id, item_id, table_name, action, field_name, old_value, new_value, created_at, created_by)
+```
+
+## Schema v5 - Items Table Additions
+
+```sql
+owner_id, assignee_id, namespace_id, priority, estimate_minutes, github_issue
+```
+
+---
+
+## Files to Create (18 new)
+
+```
+src/context/mod.rs, identity.rs
+src/db/user.rs, namespace.rs, note.rs, link.rs, audit.rs
+src/args/priority.rs, estimate.rs
+src/actions/user.rs, namespace.rs, note.rs, show.rs, claim.rs, stats.rs
+src/actions/display/json.rs, markdown.rs
+src/github/mod.rs, api.rs, issue.rs
+```
+
+## Files to Modify (10)
+
+```
+src/main.rs, src/db/conn.rs, src/db/item.rs, src/db/crud.rs, src/db/mod.rs
+src/args/parser.rs, src/args/mod.rs
+src/actions/handler.rs, src/actions/mod.rs, src/actions/display/row.rs
+src/config/mod.rs
+```
+
+---
+
+## Current Schema (v4)
+
 - id, action, category, content, create_time, target_time, modify_time, status
 - cron_schedule, human_schedule, recurring_task_id, good_until
 - reminder_days (v3)
-- project (v4) - links task to project in config
+- project (v4)
 
 ---
 
-## Usage
+## Next Action
 
-```bash
-# Install
-cargo install claude-task-manager
-
-# Add task with project
-ctm task "Fix login bug" friday -p myapp
-
-# In Claude Code, open session in project directory
-/work 3
-```
-
-### Config Structure:
-```json
-{
-  "terminal_profile": "Ubuntu",
-  "projects": {
-    "myapp": {
-      "path": "/mnt/c/python/myapp",
-      "conda_env": "myapp-env",
-      "claude_flags": "--dangerously-skip-permissions"
-    }
-  }
-}
-```
-
----
-
-## Files Modified This Session
-
-**Rust Source:**
-- `src/config/mod.rs` - Updated DB_NAME, DEFAULT_DATA_DIR, CONFIG_PATH constants
-
-**Documentation:**
-- `Cargo.toml` - name, version, description, repository, keywords, categories, bin name
-- `README.md` - Complete rewrite
-- `CHANGELOG.md` - Added v0.12.0
-
-**Claude Code Integration:**
-- `.claude/CLAUDE.md` - Updated all references
-- `.claude/agents/ctm.md` - New (renamed from tascli.md)
-- `.claude/agents/tascli.md` - Deleted
-- `.claude/commands/today.md` - Updated
-- `.claude/commands/tasks.md` - Updated
-- `.claude/commands/task.md` - Updated
-- `.claude/commands/done.md` - Updated
-- `.claude/commands/overdue.md` - Updated
-- `.claude/commands/reminders.md` - Updated
-- `.claude/commands/work.md` - Updated
-- `.claude/resume_prompt.md` - Updated
-- `.claude/checkpoint.md` - Updated
-
----
-
-## Test Status
-
-All 65 tests should pass (need to verify after changes).
-
----
-
-## Migration Note
-
-Users migrating from tascli should:
-```bash
-# Move database
-mv ~/.local/share/tascli/tascli.db ~/.local/share/ctm/ctm.db
-
-# Move config
-mv ~/.config/tascli/config.json ~/.config/ctm/config.json
-```
+Start Phase 1: Schema v5 Migration in `src/db/conn.rs`
