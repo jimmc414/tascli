@@ -229,7 +229,7 @@ pub fn handle_updatecmd(conn: &Connection, cmd: &UpdateCommand) -> Result<(), St
     if let Some(ref project) = cmd.project {
         if get_project(project).is_none() {
             return Err(format!(
-                "Project '{}' not found in config. Add it to ~/.config/tascli/config.json",
+                "Project '{}' not found in config. Add it to ~/.config/ctm/config.json",
                 project
             ));
         }

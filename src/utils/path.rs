@@ -76,9 +76,9 @@ mod tests {
 
     #[test]
     fn test_build_spawn_command_basic() {
-        let cmd = build_spawn_command("Ubuntu", "C:\\python\\tascli", None, None, None);
+        let cmd = build_spawn_command("Ubuntu", "C:\\python\\ctm", None, None, None);
         assert!(cmd.contains("wt.exe -p Ubuntu"));
-        assert!(cmd.contains("-d C:\\python\\tascli"));
+        assert!(cmd.contains("-d C:\\python\\ctm"));
         assert!(cmd.contains("export PATH="));
         assert!(cmd.contains("claude"));
     }

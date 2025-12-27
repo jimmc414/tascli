@@ -41,7 +41,7 @@ pub fn handle_taskcmd(conn: &Connection, ctx: &Context, cmd: &TaskCommand) -> Re
     if let Some(ref project_name) = cmd.project {
         if get_project(project_name).is_none() {
             return Err(format!(
-                "Project '{}' not found in config. Add it to ~/.config/tascli/config.json",
+                "Project '{}' not found in config. Add it to ~/.config/ctm/config.json",
                 project_name
             ));
         }
@@ -161,7 +161,7 @@ fn handle_from_issue(
     if let Some(ref project_name) = cmd.project {
         if get_project(project_name).is_none() {
             return Err(format!(
-                "Project '{}' not found in config. Add it to ~/.config/tascli/config.json",
+                "Project '{}' not found in config. Add it to ~/.config/ctm/config.json",
                 project_name
             ));
         }

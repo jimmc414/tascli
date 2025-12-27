@@ -36,7 +36,7 @@ Just talk to Claude. The ctm agent understands:
 - "What did I complete today?"
 - "Show me everything overdue"
 - "Add a task for the myapp project"
-- "Assign task 2 to tascli project"
+- "Assign task 2 to myapp project"
 - "Work on the first task" (uses `/work` if task has a project)
 
 ## Agent: ctm

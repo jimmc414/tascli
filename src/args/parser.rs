@@ -9,10 +9,10 @@ use crate::args::{
     timestr::{parse_flexible_timestr, parse_recurring_timestr},
 };
 
-/// a simple CLI tool for tracking tasks and records from terminal
+/// Claude-first task management CLI with multi-tenant support.
 ///
-/// data is stored at ~/.local/share/tascli/tascli.db,
-/// or where defined in config at ~/.config/tascli/config.json
+/// Data is stored at ~/.local/share/ctm/ctm.db,
+/// or where defined in config at ~/.config/ctm/config.json
 #[derive(Debug, Parser)]
 #[command(author, version)]
 pub struct CliArgs {
@@ -81,7 +81,7 @@ pub struct TaskCommand {
     /// defaults to 7 days when specified without value
     #[arg(short = 'r', long, default_missing_value = "7", num_args = 0..=1)]
     pub reminder: Option<i64>,
-    /// project name (must be defined in ~/.config/tascli/config.json)
+    /// project name (must be defined in ~/.config/ctm/config.json)
     #[arg(short = 'p', long)]
     pub project: Option<String>,
     /// priority: high, normal (default), low (or h/n/l)
