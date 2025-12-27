@@ -23,6 +23,7 @@ ctm task "My first task" today
 | `/overdue` | Show overdue | What needs attention |
 | `/reminders` | Daily overview | Full task summary |
 | `/work` | Work on task in project | `/work 3` |
+| `/standup` | Generate standup report | Yesterday/Today/Blockers |
 
 ## Natural Language
 
