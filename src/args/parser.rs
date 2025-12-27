@@ -43,6 +43,14 @@ pub enum Action {
     /// list tasks or records
     #[command(subcommand)]
     List(ListCommand),
+    /// add a note to a task
+    Note(NoteCommand),
+    /// show detailed view of a task
+    Show(ShowCommand),
+    /// claim an unassigned task
+    Claim(ClaimCommand),
+    /// attach a link (commit, issue, PR, URL) to a task
+    Link(LinkCommand),
     /// manage users
     #[command(subcommand)]
     User(UserCommand),
@@ -317,6 +325,51 @@ pub struct NamespaceRemoveUserCommand {
 pub struct NamespaceMembersCommand {
     /// namespace name (defaults to current namespace)
     pub namespace: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct NoteCommand {
+    /// index from previous list command
+    #[arg(value_parser = validate_index)]
+    pub index: usize,
+    /// note content to add
+    pub content: String,
+}
+
+#[derive(Debug, Args)]
+pub struct ShowCommand {
+    /// index from previous list command
+    #[arg(value_parser = validate_index)]
+    pub index: usize,
+}
+
+#[derive(Debug, Args)]
+pub struct ClaimCommand {
+    /// index from previous list command
+    #[arg(value_parser = validate_index)]
+    pub index: usize,
+}
+
+#[derive(Debug, Args)]
+pub struct LinkCommand {
+    /// index from previous list command
+    #[arg(value_parser = validate_index)]
+    pub index: usize,
+    /// attach a commit hash
+    #[arg(long)]
+    pub commit: Option<String>,
+    /// attach a GitHub issue (e.g., owner/repo#42)
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// attach a pull request (e.g., owner/repo#43)
+    #[arg(long)]
+    pub pr: Option<String>,
+    /// attach a URL
+    #[arg(long)]
+    pub url: Option<String>,
+    /// optional title for the link
+    #[arg(short, long)]
+    pub title: Option<String>,
 }
 
 fn syntax_helper(cmd: &str, s: &str) -> Result<String, String> {

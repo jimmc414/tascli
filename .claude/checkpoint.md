@@ -1,11 +1,40 @@
 # Checkpoint: Multi-Tenant CTM Implementation
 
-**Date:** 2025-12-26
-**Status:** Phases 1-4 COMPLETE, ready for Phase 5
+**Date:** 2025-12-27
+**Status:** Phases 1-5 COMPLETE, ready for Phase 6
 
 ---
 
 ## Completed This Session
+
+### Phase 5: Notes/Show/Claim/Link ✓
+- Created `src/db/note.rs` - TaskNote struct + CRUD operations
+- Created `src/db/link.rs` - TaskLink struct + CRUD operations
+- Created `src/actions/note.rs` - Note command handler
+- Created `src/actions/show.rs` - Detailed view with priority, status, notes, links
+- Created `src/actions/claim.rs` - Take ownership of unassigned tasks
+- Created `src/actions/link.rs` - Attach commits, issues, PRs, URLs to tasks
+- Updated `src/db/mod.rs` to export note and link modules
+- Updated `src/actions/mod.rs` to export new modules
+- Added NoteCommand, ShowCommand, ClaimCommand, LinkCommand to parser.rs
+- Updated handler.rs to route new commands
+
+**New commands:**
+```bash
+ctm note <index> "note text"     # Append timestamped note
+ctm show <index>                 # Detailed view with notes/links
+ctm claim <index>                # Take ownership of unassigned task
+ctm link <index> --issue owner/repo#42
+ctm link <index> --pr owner/repo#43
+ctm link <index> --commit abc123
+ctm link <index> --url https://... -t "Title"
+```
+
+**All 124 tests pass.**
+
+---
+
+## Previously Completed
 
 ### Phase 1: Schema v5 Migration ✓
 - Updated `SCHEMA_VERSION` from 4 to 5 in `src/db/conn.rs`
@@ -82,7 +111,7 @@
 | 2 | Identity Context System | COMPLETE |
 | 3 | User/Namespace Commands | COMPLETE |
 | 4 | Task Enhancements | COMPLETE |
-| 5 | Notes/Show/Claim/Link | Not started |
+| 5 | Notes/Show/Claim/Link | COMPLETE |
 | 6 | Reporting Commands | Not started |
 | 7 | GitHub Integration | Not started |
 | 8 | /work + /standup | Not started |
@@ -96,8 +125,14 @@ src/context/mod.rs          # Context module export
 src/context/identity.rs     # Context struct + resolution logic
 src/db/user.rs              # User struct + CRUD operations
 src/db/namespace.rs         # Namespace struct + CRUD operations
+src/db/note.rs              # TaskNote struct + CRUD operations
+src/db/link.rs              # TaskLink struct + CRUD operations
 src/actions/user.rs         # User command handlers
 src/actions/namespace.rs    # Namespace command handlers
+src/actions/note.rs         # Note command handler
+src/actions/show.rs         # Detailed view handler
+src/actions/claim.rs        # Claim command handler
+src/actions/link.rs         # Link command handler
 src/args/priority.rs        # Priority parsing (high/normal/low)
 src/args/estimate.rs        # Estimate parsing (2h/30m/1h30m)
 ```
@@ -144,10 +179,10 @@ audit_log (id, item_id, table_name, action, field_name, old_value, new_value, cr
 
 ## Next Action
 
-Start Phase 5: Notes/Show/Claim/Link
-- Create `src/db/note.rs` - TaskNote struct and CRUD
-- Create `src/db/link.rs` - TaskLink struct and CRUD
-- Create `src/actions/note.rs` - Note command handler (`ctm note <index> "text"`)
-- Create `src/actions/show.rs` - Detailed view (`ctm show <index>`)
-- Create `src/actions/claim.rs` - Take ownership (`ctm claim <index>`)
-- Add Link command for attaching commits/issues/PRs to tasks
+Start Phase 6: Reporting Commands
+- Create `src/actions/stats.rs` - Team, workload, stats handlers
+- Create `src/actions/display/json.rs` - JSON output support
+- Create `src/actions/display/markdown.rs` - Markdown output support
+- Add `ctm team [--json] [--md]` - Who has what tasks
+- Add `ctm workload [--user sarah]` - Hours per person
+- Add `ctm stats` - Completion rates, overdue analysis

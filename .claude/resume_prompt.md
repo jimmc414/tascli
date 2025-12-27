@@ -6,7 +6,7 @@ Use this prompt to resume work after context compaction.
 
 ## Context
 
-I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI task manager. **Phases 1-4 are complete, ready for Phase 5.**
+I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI task manager. **Phases 1-5 are complete, ready for Phase 6.**
 
 **Project location:** `/mnt/c/python/claude-task-manager`
 
@@ -18,12 +18,12 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 | 2 | Identity Context System | COMPLETE |
 | 3 | User/Namespace Commands | COMPLETE |
 | 4 | Task Enhancements | COMPLETE |
-| 5 | Notes/Show/Claim/Link | **NEXT** |
-| 6 | Reporting Commands | Not started |
+| 5 | Notes/Show/Claim/Link | COMPLETE |
+| 6 | Reporting Commands | **NEXT** |
 | 7 | GitHub Integration | Not started |
 | 8 | /work + /standup | Not started |
 
-**All 87 tests pass.**
+**All 124 tests pass.**
 
 ## What Was Completed
 
@@ -53,6 +53,14 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 - ItemQuery filters: assignee_id, owner_id, namespace_id
 - Tasks now store: owner_id, assignee_id, namespace_id, priority, estimate_minutes
 
+### Phase 5: Notes/Show/Claim/Link
+- Note CRUD: `src/db/note.rs` - TaskNote struct with append-only notes
+- Link CRUD: `src/db/link.rs` - TaskLink struct (commit/issue/pr/url)
+- Note handler: `src/actions/note.rs` - `ctm note <index> "text"`
+- Show handler: `src/actions/show.rs` - Detailed view with notes/links
+- Claim handler: `src/actions/claim.rs` - Take ownership of unassigned tasks
+- Link handler: `src/actions/link.rs` - Attach commits/issues/PRs/URLs
+
 ## Key Files
 
 - **Full plan:** `/home/jim/.claude/plans/modular-fluttering-aurora.md`
@@ -66,13 +74,13 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 
 ```
 1. Read checkpoint: .claude/checkpoint.md
-2. Start Phase 5: Notes/Show/Claim/Link
-   - Create src/db/note.rs - TaskNote struct + CRUD
-   - Create src/db/link.rs - TaskLink struct + CRUD
-   - Create src/actions/note.rs - Note command handler (ctm note <index> "text")
-   - Create src/actions/show.rs - Detailed view (ctm show <index>)
-   - Create src/actions/claim.rs - Take ownership (ctm claim <index>)
-   - Add Link command for attaching commits/issues/PRs to tasks
+2. Start Phase 6: Reporting Commands
+   - Create src/actions/stats.rs - Team, workload, stats handlers
+   - Create src/actions/display/json.rs - JSON output support
+   - Create src/actions/display/markdown.rs - Markdown output support
+   - Add `ctm team [--json] [--md]` - Who has what tasks
+   - Add `ctm workload [--user sarah]` - Hours per person
+   - Add `ctm stats` - Completion rates, overdue analysis
 ```
 
 ## Design Decisions (Don't Re-Ask)
@@ -88,14 +96,14 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 - Future-proof for concurrent access (proper IDs, audit trails)
 - Reports support --json and --md output flags
 
-## Phase 5 Commands to Implement
+## Phase 5 Commands (COMPLETE)
 
 ```bash
 # Notes
 ctm note <index> "note text"     # Append timestamped note
 
 # Detailed view
-ctm show <index>                 # Full task details with notes/links/history
+ctm show <index>                 # Full task details with notes/links
 
 # Claiming
 ctm claim <index>                # Take ownership of unassigned task
@@ -104,6 +112,15 @@ ctm claim <index>                # Take ownership of unassigned task
 ctm link <index> --issue owner/repo#42
 ctm link <index> --pr owner/repo#43
 ctm link <index> --commit abc123
+ctm link <index> --url https://... -t "Title"
+```
+
+## Phase 6 Commands to Implement
+
+```bash
+ctm team [--json] [--md]         # Who has what tasks
+ctm workload [--user sarah]      # Hours per person
+ctm stats                        # Completion rates, overdue
 ```
 
 ## Global Flags (Already Implemented)

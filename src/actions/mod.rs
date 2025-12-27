@@ -1,7 +1,11 @@
 pub mod addition;
+pub mod claim;
 pub mod display;
 pub mod handler;
+pub mod link;
 pub mod list;
 pub mod modify;
 pub mod namespace;
+pub mod note;
+pub mod show;
 pub mod user;
