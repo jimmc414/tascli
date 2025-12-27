@@ -3,7 +3,11 @@ use clap::{
     Parser,
     Subcommand,
 };
-use crate::args::timestr::{parse_flexible_timestr, parse_recurring_timestr};
+use crate::args::{
+    estimate::parse_estimate,
+    priority::parse_priority,
+    timestr::{parse_flexible_timestr, parse_recurring_timestr},
+};
 
 /// a simple CLI tool for tracking tasks and records from terminal
 ///
@@ -66,6 +70,15 @@ pub struct TaskCommand {
     /// project name (must be defined in ~/.config/tascli/config.json)
     #[arg(short = 'p', long)]
     pub project: Option<String>,
+    /// priority: high, normal (default), low (or h/n/l)
+    #[arg(short = 'P', long, value_parser = parse_priority)]
+    pub priority: Option<u8>,
+    /// time estimate: 30m, 2h, 1h30m, 1.5h
+    #[arg(short = 'e', long, value_parser = parse_estimate)]
+    pub estimate: Option<i64>,
+    /// assign task to a user (username)
+    #[arg(long = "for")]
+    pub assignee: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -173,6 +186,12 @@ pub struct ListTaskCommand {
     /// search for tasks containing this text in their content
     #[arg(long)]
     pub search: Option<String>,
+    /// filter tasks by assignee username
+    #[arg(short, long)]
+    pub user: Option<String>,
+    /// show tasks for all users (ignores current user filter)
+    #[arg(long, default_value_t = false)]
+    pub all_users: bool,
 }
 
 #[derive(Debug, Args)]

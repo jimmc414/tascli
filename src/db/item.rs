@@ -177,6 +177,10 @@ pub struct ItemQuery<'a> {
     pub limit: Option<usize>,
     pub offset: Offset,
     pub order_by: Option<&'a str>,
+    // Multi-tenant filters
+    pub assignee_id: Option<i64>,
+    pub owner_id: Option<i64>,
+    pub namespace_id: Option<i64>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -206,6 +210,9 @@ impl<'a> ItemQuery<'a> {
             limit: None,
             offset: Offset::None,
             order_by: None,
+            assignee_id: None,
+            owner_id: None,
+            namespace_id: None,
         }
     }
 
@@ -299,6 +306,21 @@ impl<'a> ItemQuery<'a> {
 
     pub fn with_recurring_task_id(mut self, recurring_task_id: i64) -> Self {
         self.recurring_task_id = Some(recurring_task_id);
+        self
+    }
+
+    pub fn with_assignee_id(mut self, assignee_id: i64) -> Self {
+        self.assignee_id = Some(assignee_id);
+        self
+    }
+
+    pub fn with_owner_id(mut self, owner_id: i64) -> Self {
+        self.owner_id = Some(owner_id);
+        self
+    }
+
+    pub fn with_namespace_id(mut self, namespace_id: i64) -> Self {
+        self.namespace_id = Some(namespace_id);
         self
     }
 }

@@ -25,11 +25,23 @@ use crate::{
             RECURRING_TASK_RECORD,
             TASK,
         },
+        user::get_user_by_name,
     },
 };
 
 pub fn handle_listtasks(conn: &Connection, cmd: ListTaskCommand) -> Result<(), String> {
-    let recurring_tasks = match query_recurring_tasks(conn, &cmd) {
+    // Resolve user filter to assignee_id (skip if all_users is true)
+    let assignee_id = if cmd.all_users {
+        None
+    } else if let Some(ref username) = cmd.user {
+        let user = get_user_by_name(conn, username)?
+            .ok_or_else(|| format!("User '{}' not found", username))?;
+        Some(user.id)
+    } else {
+        None
+    };
+
+    let recurring_tasks = match query_recurring_tasks(conn, &cmd, assignee_id) {
         Ok(tasks) => tasks,
         Err(estr) => {
             display::print_bold(&estr);
@@ -69,7 +81,7 @@ pub fn handle_listtasks(conn: &Connection, cmd: ListTaskCommand) -> Result<(), S
         recurring_tasks
     } else {
         // Recurring tasks didn't hit limit, safe to query and combine with regular tasks
-        let regular_tasks = match query_tasks(conn, &cmd) {
+        let regular_tasks = match query_tasks(conn, &cmd, assignee_id) {
             Ok(tasks) => tasks,
             Err(estr) => {
                 display::print_bold(&estr);
@@ -117,13 +129,20 @@ pub fn handle_listtasks(conn: &Connection, cmd: ListTaskCommand) -> Result<(), S
 
 // Some cmd query argument do not apply - moved to application layer.
 // Skip query for status because recurring tasks do not have status.
-fn query_recurring_tasks(conn: &Connection, cmd: &ListTaskCommand) -> Result<Vec<Item>, String> {
+fn query_recurring_tasks(
+    conn: &Connection,
+    cmd: &ListTaskCommand,
+    assignee_id: Option<i64>,
+) -> Result<Vec<Item>, String> {
     let mut query = ItemQuery::new().with_action(RECURRING_TASK);
     if let Some(cat) = &cmd.category {
         query = query.with_category(cat);
     }
     if let Some(search_term) = &cmd.search {
         query = query.with_content_like(search_term);
+    }
+    if let Some(aid) = assignee_id {
+        query = query.with_assignee_id(aid);
     }
     let mut offset = Offset::None;
     if cmd.next_page {
@@ -192,9 +211,18 @@ fn mark_recurring_task_by_completion(
     Ok(recurring_tasks)
 }
 
-fn query_tasks(conn: &Connection, cmd: &ListTaskCommand) -> Result<Vec<Item>, String> {
+fn query_tasks(
+    conn: &Connection,
+    cmd: &ListTaskCommand,
+    assignee_id: Option<i64>,
+) -> Result<Vec<Item>, String> {
     let mut task_query = ItemQuery::new().with_action(TASK);
     let now = Local::now().timestamp();
+
+    // Apply assignee filter
+    if let Some(aid) = assignee_id {
+        task_query = task_query.with_assignee_id(aid);
+    }
 
     // Store the user's requested cutoff for post-filtering
     let user_cutoff: Option<i64> = if let Some(t) = &cmd.timestr {
@@ -300,6 +328,8 @@ mod tests {
                 limit: 100,
                 next_page: false,
                 search: None,
+                user: None,
+                all_users: false,
             }
         }
 
@@ -342,13 +372,13 @@ mod tests {
         insert_task(&conn, "fun", "first_due", "yesterday");
 
         let list_tasks_default = ListTaskCommand::default_test();
-        let results = query_tasks(&conn, &list_tasks_default).unwrap();
+        let results = query_tasks(&conn, &list_tasks_default, None).unwrap();
         assert_eq!(results.len(), 2);
         assert_eq!(results.first().unwrap().content, "second_due");
         assert_eq!(results.last().unwrap().content, "third_due");
 
         let list_tasks_with_overdue = ListTaskCommand::default_test().with_overdue(true);
-        let results = query_tasks(&conn, &list_tasks_with_overdue).unwrap();
+        let results = query_tasks(&conn, &list_tasks_with_overdue, None).unwrap();
         assert_eq!(results.len(), 3);
         assert_eq!(results.first().unwrap().content, "first_due");
     }
@@ -375,13 +405,13 @@ mod tests {
             .with_category("test")
             .with_limit(10);
 
-        let results = query_tasks(&conn, &list_task).unwrap();
+        let results = query_tasks(&conn, &list_task, None).unwrap();
         cache::store_with_next(&conn, &results).unwrap();
         assert_eq!(results.len(), 10);
         assert!(results.iter().all(|i| i.content.contains("AM")));
 
         let list_task_next = list_task.with_next_page();
-        let results = query_tasks(&conn, &list_task_next).unwrap();
+        let results = query_tasks(&conn, &list_task_next, None).unwrap();
 
         cache::clear(&conn).unwrap();
         cache::store_with_next(&conn, &results).unwrap();
@@ -389,7 +419,7 @@ mod tests {
         assert_eq!(results.first().unwrap().content, "index 11AM");
         assert_eq!(results.last().unwrap().content, "index 9PM");
 
-        let results = query_tasks(&conn, &list_task_next).unwrap();
+        let results = query_tasks(&conn, &list_task_next, None).unwrap();
 
         cache::clear(&conn).unwrap();
         cache::store(&conn, &results).unwrap();
@@ -397,7 +427,7 @@ mod tests {
         assert_eq!(results.first().unwrap().content, "index 10PM");
         assert_eq!(results.last().unwrap().content, "index 11PM");
 
-        let results = query_tasks(&conn, &list_task_next);
+        let results = query_tasks(&conn, &list_task_next, None);
         assert_eq!(results.unwrap_err(), "No next page available".to_string());
     }
 
@@ -421,12 +451,12 @@ mod tests {
         let list_open = ListTaskCommand::default_test().with_status(254);
         let list_closed = ListTaskCommand::default_test().with_status(253);
 
-        let results = query_tasks(&conn, &list_open).expect("Unable to query");
+        let results = query_tasks(&conn, &list_open, None).expect("Unable to query");
         assert_eq!(results.len(), 6);
         assert!(results
             .iter()
             .all(|t| t.category == "ongoing" || t.category == "pending"));
-        let results = query_tasks(&conn, &list_closed).expect("Unable to query");
+        let results = query_tasks(&conn, &list_closed, None).expect("Unable to query");
         assert_eq!(results.len(), 4);
         assert!(results
             .iter()
@@ -444,12 +474,12 @@ mod tests {
 
         // Test basic query
         let list_all = ListTaskCommand::default_test();
-        let results = query_recurring_tasks(&conn, &list_all).unwrap();
+        let results = query_recurring_tasks(&conn, &list_all, None).unwrap();
         assert_eq!(results.len(), 3);
 
         // Test category filter
         let list_work = ListTaskCommand::default_test().with_category("work");
-        let results = query_recurring_tasks(&conn, &list_work).unwrap();
+        let results = query_recurring_tasks(&conn, &list_work, None).unwrap();
         assert_eq!(results.len(), 2);
         for task in &results {
             assert_eq!(task.category, "work");
@@ -457,13 +487,13 @@ mod tests {
 
         // Test search filter
         let list_search = ListTaskCommand::default_test().with_search("standup");
-        let results = query_recurring_tasks(&conn, &list_search).unwrap();
+        let results = query_recurring_tasks(&conn, &list_search, None).unwrap();
         assert_eq!(results.len(), 1);
         assert!(results[0].content.contains("standup"));
 
         // Test limit
         let list_limited = ListTaskCommand::default_test().with_limit(2);
-        let results = query_recurring_tasks(&conn, &list_limited).unwrap();
+        let results = query_recurring_tasks(&conn, &list_limited, None).unwrap();
         assert_eq!(results.len(), 2);
     }
 
@@ -478,7 +508,7 @@ mod tests {
 
         // Query all recurring tasks
         let cmd = ListTaskCommand::default_test();
-        let all_tasks = query_recurring_tasks(&conn, &cmd).unwrap();
+        let all_tasks = query_recurring_tasks(&conn, &cmd, None).unwrap();
         assert_eq!(all_tasks.len(), 3);
 
         // Test with no time filter (should return all)
@@ -513,7 +543,7 @@ mod tests {
 
         // Query all recurring tasks
         let cmd = ListTaskCommand::default_test();
-        let all_tasks = query_recurring_tasks(&conn, &cmd).unwrap();
+        let all_tasks = query_recurring_tasks(&conn, &cmd, None).unwrap();
         assert_eq!(all_tasks.len(), 3);
 
         // Mark completion status
@@ -633,8 +663,8 @@ mod tests {
             next_page: true,
             ..ListTaskCommand::default_test()
         };
-        let recurring_and_regular = query_recurring_tasks(&conn, &cmd_next).unwrap();
-        let regular_tasks = query_tasks(&conn, &cmd_next).unwrap();
+        let recurring_and_regular = query_recurring_tasks(&conn, &cmd_next, None).unwrap();
+        let regular_tasks = query_tasks(&conn, &cmd_next, None).unwrap();
 
         // Should have 1 recurring task left (Recurring 3)
         assert_eq!(recurring_and_regular.len(), 1);
@@ -755,7 +785,7 @@ mod tests {
         let search_meeting_tasks = ListTaskCommand::default_test()
             .with_overdue(true)
             .with_search("meeting");
-        let results = query_tasks(&conn, &search_meeting_tasks).unwrap();
+        let results = query_tasks(&conn, &search_meeting_tasks, None).unwrap();
         assert_eq!(results.len(), 3);
         for task in &results {
             assert!(task.content.contains("meeting"));
@@ -766,7 +796,7 @@ mod tests {
             .with_category("work")
             .with_overdue(true)
             .with_search("meeting");
-        let results = query_tasks(&conn, &search_work_meeting).unwrap();
+        let results = query_tasks(&conn, &search_work_meeting, None).unwrap();
         assert_eq!(results.len(), 2);
         for task in &results {
             assert!(task.content.contains("meeting"));

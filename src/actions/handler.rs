@@ -18,7 +18,7 @@ use crate::{
 
 pub fn handle_commands(conn: &Connection, ctx: &Context, args: CliArgs) -> Result<(), String> {
     match args.arguments {
-        Action::Task(cmd) => addition::handle_taskcmd(conn, &cmd),
+        Action::Task(cmd) => addition::handle_taskcmd(conn, ctx, &cmd),
         Action::Record(cmd) => addition::handle_recordcmd(conn, &cmd),
         Action::Done(cmd) => modify::handle_donecmd(conn, &cmd),
         Action::Delete(cmd) => modify::handle_deletecmd(conn, &cmd),

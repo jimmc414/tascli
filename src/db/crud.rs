@@ -189,6 +189,22 @@ pub fn query_items(
         params.push(rt_id.to_string());
     }
 
+    // Multi-tenant filters
+    if let Some(assignee_id) = item_query.assignee_id {
+        conditions.push("assignee_id = ?".to_string());
+        params.push(assignee_id.to_string());
+    }
+
+    if let Some(owner_id) = item_query.owner_id {
+        conditions.push("owner_id = ?".to_string());
+        params.push(owner_id.to_string());
+    }
+
+    if let Some(namespace_id) = item_query.namespace_id {
+        conditions.push("namespace_id = ?".to_string());
+        params.push(namespace_id.to_string());
+    }
+
     if let Some(cc) = &item_query.statuses {
         let status_list = cc
             .iter()

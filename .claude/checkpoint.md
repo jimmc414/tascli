@@ -1,7 +1,7 @@
 # Checkpoint: Multi-Tenant CTM Implementation
 
 **Date:** 2025-12-26
-**Status:** Phases 1-3 COMPLETE, ready for Phase 4
+**Status:** Phases 1-4 COMPLETE, ready for Phase 5
 
 ---
 
@@ -43,7 +43,19 @@
   - `ctm ns remove-user <ns> <user>`
   - `ctm ns members [namespace]`
 
-**All 77 tests pass.**
+### Phase 4: Task Enhancements ✓
+- Created `src/args/priority.rs` - Parse high/normal/low to 0/1/2
+- Created `src/args/estimate.rs` - Parse 2h/30m/1h30m to minutes
+- Updated `src/args/mod.rs` to export new modules
+- Added `-P`, `-e`, `--for` flags to TaskCommand in parser.rs
+- Added `-u/--user` and `--all-users` flags to ListTaskCommand
+- Updated ItemQuery with assignee_id, owner_id, namespace_id filters
+- Updated crud.rs query_items to filter by assignee/owner/namespace
+- Updated addition.rs to handle priority, estimate, assignee (resolved to user ID)
+- Updated list/tasks.rs to resolve and pass user filter to query functions
+- Tasks now store owner_id, assignee_id, namespace_id, priority, estimate_minutes
+
+**All 87 tests pass.**
 
 ---
 
@@ -69,7 +81,7 @@
 | 1 | Schema v5 Migration | COMPLETE |
 | 2 | Identity Context System | COMPLETE |
 | 3 | User/Namespace Commands | COMPLETE |
-| 4 | Task Enhancements | Not started |
+| 4 | Task Enhancements | COMPLETE |
 | 5 | Notes/Show/Claim/Link | Not started |
 | 6 | Reporting Commands | Not started |
 | 7 | GitHub Integration | Not started |
@@ -86,19 +98,24 @@ src/db/user.rs              # User struct + CRUD operations
 src/db/namespace.rs         # Namespace struct + CRUD operations
 src/actions/user.rs         # User command handlers
 src/actions/namespace.rs    # Namespace command handlers
+src/args/priority.rs        # Priority parsing (high/normal/low)
+src/args/estimate.rs        # Estimate parsing (2h/30m/1h30m)
 ```
 
 ## Files Modified
 
 ```
-src/db/conn.rs           # Schema v5 migration + auto-setup
-src/db/item.rs           # Item struct with new fields
-src/db/crud.rs           # insert_item/update_item with new fields
-src/db/mod.rs            # Export user and namespace modules
-src/args/parser.rs       # --as and --ns global flags + User/Ns subcommands
-src/main.rs              # Context resolution after DB connect
-src/actions/handler.rs   # Route User/Ns commands
-src/actions/mod.rs       # Export user and namespace modules
+src/db/conn.rs              # Schema v5 migration + auto-setup
+src/db/item.rs              # Item struct with new fields + ItemQuery filters
+src/db/crud.rs              # insert_item/update_item + assignee filtering
+src/db/mod.rs               # Export user and namespace modules
+src/args/parser.rs          # --as, --ns flags + User/Ns + -P/-e/--for/--user
+src/args/mod.rs             # Export priority and estimate modules
+src/main.rs                 # Context resolution after DB connect
+src/actions/handler.rs      # Route User/Ns commands + pass ctx to task
+src/actions/mod.rs          # Export user and namespace modules
+src/actions/addition.rs     # Handle priority, estimate, assignee on task creation
+src/actions/list/tasks.rs   # User filter support for listing tasks
 ```
 
 ---
@@ -127,9 +144,10 @@ audit_log (id, item_id, table_name, action, field_name, old_value, new_value, cr
 
 ## Next Action
 
-Start Phase 4: Task Enhancements
-- Add `src/args/priority.rs` - Parse high/normal/low
-- Add `src/args/estimate.rs` - Parse 2h/30m/1h30m
-- Modify `src/args/parser.rs` - Add -P, -e, --for, --from-issue flags to TaskCommand
-- Modify `src/db/crud.rs` - Add assignee/namespace filtering to query_items
-- Modify `src/actions/addition.rs` - Handle priority, estimate, assignee
+Start Phase 5: Notes/Show/Claim/Link
+- Create `src/db/note.rs` - TaskNote struct and CRUD
+- Create `src/db/link.rs` - TaskLink struct and CRUD
+- Create `src/actions/note.rs` - Note command handler (`ctm note <index> "text"`)
+- Create `src/actions/show.rs` - Detailed view (`ctm show <index>`)
+- Create `src/actions/claim.rs` - Take ownership (`ctm claim <index>`)
+- Add Link command for attaching commits/issues/PRs to tasks

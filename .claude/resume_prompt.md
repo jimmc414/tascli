@@ -6,7 +6,7 @@ Use this prompt to resume work after context compaction.
 
 ## Context
 
-I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI task manager. **Phases 1-3 are complete, ready for Phase 4.**
+I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI task manager. **Phases 1-4 are complete, ready for Phase 5.**
 
 **Project location:** `/mnt/c/python/claude-task-manager`
 
@@ -17,13 +17,13 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 | 1 | Schema v5 Migration | COMPLETE |
 | 2 | Identity Context System | COMPLETE |
 | 3 | User/Namespace Commands | COMPLETE |
-| 4 | Task Enhancements | **NEXT** |
-| 5 | Notes/Show/Claim/Link | Not started |
+| 4 | Task Enhancements | COMPLETE |
+| 5 | Notes/Show/Claim/Link | **NEXT** |
 | 6 | Reporting Commands | Not started |
 | 7 | GitHub Integration | Not started |
 | 8 | /work + /standup | Not started |
 
-**All 77 tests pass.**
+**All 87 tests pass.**
 
 ## What Was Completed
 
@@ -45,6 +45,14 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 - Namespace command handlers: `src/actions/namespace.rs`
 - Commands: `ctm user create/list/delete`, `ctm ns create/list/delete/switch/add-user/remove-user/members`
 
+### Phase 4: Task Enhancements
+- Priority parser: `src/args/priority.rs` (high/normal/low → 0/1/2)
+- Estimate parser: `src/args/estimate.rs` (2h/30m/1h30m → minutes)
+- TaskCommand flags: `-P`, `-e`, `--for` (priority, estimate, assignee)
+- ListTaskCommand flags: `-u/--user`, `--all-users` (user filtering)
+- ItemQuery filters: assignee_id, owner_id, namespace_id
+- Tasks now store: owner_id, assignee_id, namespace_id, priority, estimate_minutes
+
 ## Key Files
 
 - **Full plan:** `/home/jim/.claude/plans/modular-fluttering-aurora.md`
@@ -58,12 +66,13 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 
 ```
 1. Read checkpoint: .claude/checkpoint.md
-2. Start Phase 4: Task Enhancements
-   - Add src/args/priority.rs (parse high/normal/low)
-   - Add src/args/estimate.rs (parse 2h/30m/1h30m)
-   - Modify src/args/parser.rs - Add -P, -e, --for, --from-issue flags
-   - Modify src/db/crud.rs - Add assignee/namespace filtering
-   - Modify src/actions/addition.rs - Handle priority, estimate, assignee
+2. Start Phase 5: Notes/Show/Claim/Link
+   - Create src/db/note.rs - TaskNote struct + CRUD
+   - Create src/db/link.rs - TaskLink struct + CRUD
+   - Create src/actions/note.rs - Note command handler (ctm note <index> "text")
+   - Create src/actions/show.rs - Detailed view (ctm show <index>)
+   - Create src/actions/claim.rs - Take ownership (ctm claim <index>)
+   - Add Link command for attaching commits/issues/PRs to tasks
 ```
 
 ## Design Decisions (Don't Re-Ask)
@@ -79,15 +88,22 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 - Future-proof for concurrent access (proper IDs, audit trails)
 - Reports support --json and --md output flags
 
-## Phase 4 Commands to Implement
+## Phase 5 Commands to Implement
 
 ```bash
-# Task creation with enhancements
-ctm task "description" [timestr] [-P high|normal|low] [-e 2h] [--for user]
-ctm task --from-issue owner/repo#42  # Create from GitHub issue
+# Notes
+ctm note <index> "note text"     # Append timestamped note
 
-# Task listing with filters
-ctm list task [--user sarah] [--all-users]
+# Detailed view
+ctm show <index>                 # Full task details with notes/links/history
+
+# Claiming
+ctm claim <index>                # Take ownership of unassigned task
+
+# Links
+ctm link <index> --issue owner/repo#42
+ctm link <index> --pr owner/repo#43
+ctm link <index> --commit abc123
 ```
 
 ## Global Flags (Already Implemented)
