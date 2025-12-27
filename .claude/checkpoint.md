@@ -1,27 +1,31 @@
 # Checkpoint: Multi-Tenant CTM Implementation
 
 **Date:** 2025-12-26
-**Status:** Plan approved, ready to implement
+**Status:** Phases 1-2 COMPLETE, ready for Phase 3
 
 ---
 
-## What Was Done This Session
+## Completed This Session
 
-1. **Requirements Gathering** - Extensive Q&A session to define:
-   - Multi-tenant architecture (single DB, single manager model)
-   - Users, namespaces, roles (owner/admin/member/viewer)
-   - Task enhancements (priority, estimates, notes, assignee)
-   - GitHub integration (issues, PRs, commits)
-   - Reporting (team dashboard, workload, stats)
-   - Enhanced /work context for Claude sessions
+### Phase 1: Schema v5 Migration ✓
+- Updated `SCHEMA_VERSION` from 4 to 5 in `src/db/conn.rs`
+- Created 6 new tables: `users`, `namespaces`, `user_namespaces`, `task_links`, `task_notes`, `audit_log`
+- Added 6 new columns to `items`: `owner_id`, `assignee_id`, `namespace_id`, `priority`, `estimate_minutes`, `github_issue`
+- Added indexes: `idx_owner_id`, `idx_assignee_id`, `idx_namespace_id`, `idx_priority`, `idx_task_links_item_id`, `idx_task_notes_item_id`, `idx_audit_log_item_id`
+- Implemented `setup_default_user_and_namespace()` for auto-setup on first run
+- Updated `Item` struct in `src/db/item.rs` with new fields
+- Updated `insert_item()` and `update_item()` in `src/db/crud.rs`
 
-2. **Codebase Exploration** - Analyzed:
-   - Database layer (schema v4, migration patterns)
-   - CLI parsing (clap v4.5 derive-based)
-   - Display/reporting patterns (terminal tables only)
+### Phase 2: Identity Context System ✓
+- Created `src/context/mod.rs` and `src/context/identity.rs`
+- Implemented `Context` struct with identity resolution:
+  - User: `--as` flag → `CTM_USER` env → `USER` env → "default"
+  - Namespace: `--ns` flag → `CTM_NAMESPACE` env → "default"
+- Added global `--as` and `--ns` flags to `src/args/parser.rs`
+- Modified `src/main.rs` to resolve context after DB connect
+- Modified `src/actions/handler.rs` to accept `&Context` parameter
 
-3. **Implementation Plan Created** - 8 phases, ~25-30 hours total
-   - Plan saved to: `/home/jim/.claude/plans/modular-fluttering-aurora.md`
+**All 68 tests pass.**
 
 ---
 
@@ -31,7 +35,7 @@
 |----------|--------|
 | Database model | Single DB, multi-tenant |
 | User model | Single manager tracking team |
-| Identity resolution | --as flag → CTM_USER env → config → system $USER |
+| Identity resolution | --as flag → CTM_USER env → system $USER |
 | First run | Auto-setup (create user + default namespace) |
 | Task ownership | owner_id (accountable) + assignee_id (working on it) |
 | Roles | Per-namespace (owner/admin/member/viewer) |
@@ -44,8 +48,8 @@
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Schema v5 Migration | Not started |
-| 2 | Identity Context System | Not started |
+| 1 | Schema v5 Migration | COMPLETE |
+| 2 | Identity Context System | COMPLETE |
 | 3 | User/Namespace Commands | Not started |
 | 4 | Task Enhancements | Not started |
 | 5 | Notes/Show/Claim/Link | Not started |
@@ -55,8 +59,37 @@
 
 ---
 
-## Schema v5 - New Tables
+## Files Created
 
+```
+src/context/mod.rs        # Context module export
+src/context/identity.rs   # Context struct + resolution logic
+```
+
+## Files Modified
+
+```
+src/db/conn.rs           # Schema v5 migration + auto-setup
+src/db/item.rs           # Item struct with new fields
+src/db/crud.rs           # insert_item/update_item with new fields
+src/args/parser.rs       # --as and --ns global flags
+src/main.rs              # Context resolution after DB connect
+src/actions/handler.rs   # Accept &Context parameter
+```
+
+---
+
+## Current Schema (v5)
+
+### Items Table
+```sql
+id, action, category, content, create_time, target_time, modify_time, status,
+cron_schedule, human_schedule, recurring_task_id, good_until,
+reminder_days, project,
+owner_id, assignee_id, namespace_id, priority, estimate_minutes, github_issue
+```
+
+### New Tables
 ```sql
 users (id, name, display_name, created_at, created_by)
 namespaces (id, name, description, created_at, created_by)
@@ -66,45 +99,12 @@ task_notes (id, item_id, content, created_at, created_by)
 audit_log (id, item_id, table_name, action, field_name, old_value, new_value, created_at, created_by)
 ```
 
-## Schema v5 - Items Table Additions
-
-```sql
-owner_id, assignee_id, namespace_id, priority, estimate_minutes, github_issue
-```
-
----
-
-## Files to Create (18 new)
-
-```
-src/context/mod.rs, identity.rs
-src/db/user.rs, namespace.rs, note.rs, link.rs, audit.rs
-src/args/priority.rs, estimate.rs
-src/actions/user.rs, namespace.rs, note.rs, show.rs, claim.rs, stats.rs
-src/actions/display/json.rs, markdown.rs
-src/github/mod.rs, api.rs, issue.rs
-```
-
-## Files to Modify (10)
-
-```
-src/main.rs, src/db/conn.rs, src/db/item.rs, src/db/crud.rs, src/db/mod.rs
-src/args/parser.rs, src/args/mod.rs
-src/actions/handler.rs, src/actions/mod.rs, src/actions/display/row.rs
-src/config/mod.rs
-```
-
----
-
-## Current Schema (v4)
-
-- id, action, category, content, create_time, target_time, modify_time, status
-- cron_schedule, human_schedule, recurring_task_id, good_until
-- reminder_days (v3)
-- project (v4)
-
 ---
 
 ## Next Action
 
-Start Phase 1: Schema v5 Migration in `src/db/conn.rs`
+Start Phase 3: User/Namespace Commands
+- Create `src/db/user.rs` and `src/db/namespace.rs`
+- Create `src/actions/user.rs` and `src/actions/namespace.rs`
+- Add `User` and `Ns` subcommands to parser
+- Route in handler

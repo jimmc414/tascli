@@ -12,6 +12,14 @@ use crate::args::timestr::{parse_flexible_timestr, parse_recurring_timestr};
 #[derive(Debug, Parser)]
 #[command(author, version)]
 pub struct CliArgs {
+    /// Act as a specific user (overrides CTM_USER env and system $USER)
+    #[arg(long = "as", global = true)]
+    pub as_user: Option<String>,
+
+    /// Use a specific namespace (overrides CTM_NAMESPACE env, defaults to "default")
+    #[arg(long = "ns", global = true)]
+    pub namespace: Option<String>,
+
     #[command(subcommand)]
     pub arguments: Action,
 }

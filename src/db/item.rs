@@ -31,6 +31,19 @@ pub struct Item {
     pub reminder_days: Option<i64>,
     // project: name of project (must be defined in config) for /work command
     pub project: Option<String>,
+    // Multi-tenant fields (v5)
+    // owner_id: user who owns/is accountable for this item
+    pub owner_id: Option<i64>,
+    // assignee_id: user currently working on this item (may differ from owner)
+    pub assignee_id: Option<i64>,
+    // namespace_id: namespace this item belongs to
+    pub namespace_id: Option<i64>,
+    // priority: 0=high, 1=normal (default), 2=low
+    pub priority: Option<u8>,
+    // estimate_minutes: estimated time to complete in minutes
+    pub estimate_minutes: Option<i64>,
+    // github_issue: linked GitHub issue (e.g., "owner/repo#42")
+    pub github_issue: Option<String>,
     // Runtime-only field applicable to recurring task, not persisted to db
     // Computed at application layer indicating if a recurring_task is completed.
     pub recurring_interval_complete: bool,
@@ -63,6 +76,12 @@ impl Item {
             good_until: None,
             reminder_days: None,
             project: None,
+            owner_id: None,
+            assignee_id: None,
+            namespace_id: None,
+            priority: None,
+            estimate_minutes: None,
+            github_issue: None,
             recurring_interval_complete: false,
         }
     }
@@ -130,6 +149,12 @@ impl Item {
             good_until: row.get("good_until")?,
             reminder_days: row.get("reminder_days").ok(),
             project: row.get("project").ok(),
+            owner_id: row.get("owner_id").ok(),
+            assignee_id: row.get("assignee_id").ok(),
+            namespace_id: row.get("namespace_id").ok(),
+            priority: row.get("priority").ok(),
+            estimate_minutes: row.get("estimate_minutes").ok(),
+            github_issue: row.get("github_issue").ok(),
             recurring_interval_complete: false,
         })
     }

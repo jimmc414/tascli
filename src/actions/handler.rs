@@ -11,9 +11,12 @@ use crate::{
         CliArgs,
         ListCommand,
     },
+    context::Context,
 };
 
-pub fn handle_commands(conn: &Connection, args: CliArgs) -> Result<(), String> {
+#[allow(unused_variables)]
+pub fn handle_commands(conn: &Connection, ctx: &Context, args: CliArgs) -> Result<(), String> {
+    // Note: ctx will be used in later phases for namespace/user filtering
     match args.arguments {
         Action::Task(cmd) => addition::handle_taskcmd(conn, &cmd),
         Action::Record(cmd) => addition::handle_recordcmd(conn, &cmd),

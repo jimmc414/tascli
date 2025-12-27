@@ -20,8 +20,8 @@ const VALID_ORDER_COLUMNS: &[&str] = &["id", "create_time", "target_time"];
 
 pub fn insert_item(conn: &Connection, item: &Item) -> Result<i64> {
     conn.execute(
-        "INSERT INTO items (action, category, content, create_time, target_time, cron_schedule, human_schedule, recurring_task_id, good_until, reminder_days, project)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+        "INSERT INTO items (action, category, content, create_time, target_time, cron_schedule, human_schedule, recurring_task_id, good_until, reminder_days, project, owner_id, assignee_id, namespace_id, priority, estimate_minutes, github_issue)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)",
         params![
             item.action,
             item.category,
@@ -33,7 +33,13 @@ pub fn insert_item(conn: &Connection, item: &Item) -> Result<i64> {
             item.recurring_task_id,
             item.good_until,
             item.reminder_days,
-            item.project
+            item.project,
+            item.owner_id,
+            item.assignee_id,
+            item.namespace_id,
+            item.priority,
+            item.estimate_minutes,
+            item.github_issue
         ],
     )?;
 
@@ -58,8 +64,14 @@ pub fn update_item(conn: &Connection, item: &Item) -> Result<()> {
             recurring_task_id = ?8,
             good_until = ?9,
             reminder_days = ?10,
-            project = ?11
-        WHERE id = ?12",
+            project = ?11,
+            owner_id = ?12,
+            assignee_id = ?13,
+            namespace_id = ?14,
+            priority = ?15,
+            estimate_minutes = ?16,
+            github_issue = ?17
+        WHERE id = ?18",
         params![
             item.category,
             item.content,
@@ -72,6 +84,12 @@ pub fn update_item(conn: &Connection, item: &Item) -> Result<()> {
             item.good_until,
             item.reminder_days,
             item.project,
+            item.owner_id,
+            item.assignee_id,
+            item.namespace_id,
+            item.priority,
+            item.estimate_minutes,
+            item.github_issue,
             item.id
         ],
     )?;
