@@ -93,6 +93,9 @@ pub struct TaskCommand {
     /// assign task to a user (username)
     #[arg(long = "for")]
     pub assignee: Option<String>,
+    /// create task from GitHub issue (e.g., owner/repo#42)
+    #[arg(long)]
+    pub from_issue: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -120,6 +123,9 @@ pub struct DoneCommand {
     /// add comment to task content and completion record
     #[arg(short, long)]
     pub comment: Option<String>,
+    /// close linked GitHub issue when completing task
+    #[arg(long)]
+    pub close_issue: bool,
 }
 
 #[derive(Debug, Args)]

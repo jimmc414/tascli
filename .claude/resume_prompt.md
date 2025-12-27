@@ -6,7 +6,7 @@ Use this prompt to resume work after context compaction.
 
 ## Context
 
-I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI task manager. **Phases 1-6 are complete, ready for Phase 7.**
+I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI task manager. **Phases 1-7 are complete, ready for Phase 8.**
 
 **Project location:** `/mnt/c/python/claude-task-manager`
 
@@ -20,73 +20,48 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 | 4 | Task Enhancements | COMPLETE |
 | 5 | Notes/Show/Claim/Link | COMPLETE |
 | 6 | Reporting Commands | COMPLETE |
-| 7 | GitHub Integration | **NEXT** |
-| 8 | /work + /standup | Not started |
+| 7 | GitHub Integration | COMPLETE |
+| 8 | /work + /standup | **NEXT** |
 
-**All 133 tests pass.**
+**All 143 tests pass.**
 
 ## What Was Completed
 
-### Phase 1: Schema v5
-- New tables: `users`, `namespaces`, `user_namespaces`, `task_links`, `task_notes`, `audit_log`
-- New `items` columns: `owner_id`, `assignee_id`, `namespace_id`, `priority`, `estimate_minutes`, `github_issue`
-- Auto-setup creates default user + namespace on first run
-- Files: `src/db/conn.rs`, `src/db/item.rs`, `src/db/crud.rs`
-
-### Phase 2: Identity Context
-- `Context` struct resolves current user/namespace
-- Global `--as` and `--ns` CLI flags added
-- Files: `src/context/mod.rs`, `src/context/identity.rs`, `src/main.rs`, `src/actions/handler.rs`, `src/args/parser.rs`
-
-### Phase 3: User/Namespace Commands
-- User struct + CRUD: `src/db/user.rs`
-- Namespace struct + CRUD: `src/db/namespace.rs`
-- User command handlers: `src/actions/user.rs`
-- Namespace command handlers: `src/actions/namespace.rs`
-- Commands: `ctm user create/list/delete`, `ctm ns create/list/delete/switch/add-user/remove-user/members`
-
-### Phase 4: Task Enhancements
-- Priority parser: `src/args/priority.rs` (high/normal/low → 0/1/2)
-- Estimate parser: `src/args/estimate.rs` (2h/30m/1h30m → minutes)
-- TaskCommand flags: `-P`, `-e`, `--for` (priority, estimate, assignee)
-- ListTaskCommand flags: `-u/--user`, `--all-users` (user filtering)
-- ItemQuery filters: assignee_id, owner_id, namespace_id
-- Tasks now store: owner_id, assignee_id, namespace_id, priority, estimate_minutes
-
-### Phase 5: Notes/Show/Claim/Link
-- Note CRUD: `src/db/note.rs` - TaskNote struct with append-only notes
-- Link CRUD: `src/db/link.rs` - TaskLink struct (commit/issue/pr/url)
-- Note handler: `src/actions/note.rs` - `ctm note <index> "text"`
-- Show handler: `src/actions/show.rs` - Detailed view with notes/links
-- Claim handler: `src/actions/claim.rs` - Take ownership of unassigned tasks
-- Link handler: `src/actions/link.rs` - Attach commits/issues/PRs/URLs
+### Phase 7: GitHub Integration
+- New files: `src/github/mod.rs`, `src/github/api.rs`
+- gh CLI wrapper: `parse_issue_ref()`, `is_gh_available()`, `get_issue()`, `close_issue()`
+- `--from-issue` flag on TaskCommand
+- `--close-issue` flag on DoneCommand
+- `handle_from_issue()` in addition.rs
+- `close_linked_issue()` in modify.rs
 
 ### Phase 6: Reporting Commands
-- Reporting handlers: `src/actions/reporting.rs` - Team, workload, stats
-- Added serde_json dependency for JSON output
+- New file: `src/actions/reporting.rs`
 - Commands: `ctm team`, `ctm workload`, `ctm stats`
-- All support `--json` and `--md` output formats
+- Output formats: text, `--json`, `--md`
+
+### Phase 1-5: Multi-Tenant Foundation
+- Schema v5 with users, namespaces, task_links, task_notes, audit_log
+- Context/identity system with `--as` and `--ns` flags
+- User/namespace CRUD commands
+- Task priority, estimates, assignees
+- Notes, show, claim, link commands
 
 ## Key Files
 
 - **Full plan:** `/home/jim/.claude/plans/modular-fluttering-aurora.md`
 - **Checkpoint:** `.claude/checkpoint.md`
-- **Schema migrations:** `src/db/conn.rs`
+- **GitHub module:** `src/github/api.rs`
 - **CLI commands:** `src/args/parser.rs`
 - **Command handlers:** `src/actions/handler.rs`
-- **Context:** `src/context/identity.rs`
-- **Reporting:** `src/actions/reporting.rs`
 
 ## To Resume
 
 ```
 1. Read checkpoint: .claude/checkpoint.md
-2. Start Phase 7: GitHub Integration
-   - Create src/github/mod.rs - Module structure
-   - Create src/github/api.rs - gh CLI wrapper
-   - Add --from-issue flag to task command (create task from issue)
-   - Add --close-issue flag to done command
-   - Implement issue/PR linking via gh CLI
+2. Start Phase 8: /work + /standup
+   - Modify .claude/commands/work.md - Enhanced /work context
+   - Create .claude/commands/standup.md - Standup generation
 ```
 
 ## Design Decisions (Don't Re-Ask)
@@ -102,27 +77,24 @@ I'm implementing a major feature set for claude-task-manager (ctm), a Rust CLI t
 - Future-proof for concurrent access (proper IDs, audit trails)
 - Reports support --json and --md output flags
 
-## Phase 6 Commands (COMPLETE)
+## Phase 7 Commands (COMPLETE)
 
 ```bash
-# Team distribution
-ctm team [--json] [--md]         # Who has what tasks
+# Create task from GitHub issue
+ctm task --from-issue owner/repo#42
 
-# Workload analysis
-ctm workload [--user sarah]      # Hours per person
-ctm workload --json              # JSON output
-
-# Statistics
-ctm stats [--days 30]            # Completion rates, overdue
-ctm stats --json                 # JSON output
-ctm stats --md                   # Markdown output
+# Complete task and close linked issue
+ctm done 3 --close-issue
 ```
 
-## Phase 7 Commands to Implement
+## Phase 8 Commands to Implement
 
 ```bash
-ctm task --from-issue owner/repo#42    # Create task from GitHub issue
-ctm done 3 --close-issue               # Complete task, close linked issue
+# Enhanced /work context with task notes, links, last commits
+/work <index>
+
+# Standup generation from yesterday's completions and today's tasks
+/standup
 ```
 
 ## Global Flags (Already Implemented)

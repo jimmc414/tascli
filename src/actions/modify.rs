@@ -34,6 +34,7 @@ use crate::{
             RECURRING_TASK_RECORD,
         },
     },
+    github::{close_issue, is_gh_available, parse_issue_ref},
 };
 
 pub fn handle_donecmd(conn: &Connection, cmd: &DoneCommand) -> Result<(), String> {
@@ -44,6 +45,11 @@ pub fn handle_donecmd(conn: &Connection, cmd: &DoneCommand) -> Result<(), String
     let mut item = get_item(conn, row_id).map_err(|e| format!("Failed to get item: {:?}", e))?;
     if item.action == RECORD || item.action == RECURRING_TASK_RECORD {
         return Err("Cannot complete a record".to_string());
+    }
+
+    // Handle --close-issue flag before completing the task
+    if cmd.close_issue {
+        close_linked_issue(&item)?;
     }
 
     if item.action == RECURRING_TASK {
@@ -109,6 +115,26 @@ pub fn handle_donecmd(conn: &Connection, cmd: &DoneCommand) -> Result<(), String
     update_item(conn, &item).map_err(|e| format!("Failed to update item: {:?}", e))?;
     display::print_bold("Completed Task:");
     display::print_items(&[item], false, false);
+    Ok(())
+}
+
+/// Close the linked GitHub issue for a task
+fn close_linked_issue(item: &Item) -> Result<(), String> {
+    let issue_str = item.github_issue.as_ref().ok_or(
+        "Task has no linked GitHub issue. Use 'ctm link --issue owner/repo#N' first.".to_string(),
+    )?;
+
+    if !is_gh_available() {
+        return Err(
+            "GitHub CLI (gh) is not installed or not authenticated. Run 'gh auth login' first."
+                .to_string(),
+        );
+    }
+
+    let issue_ref = parse_issue_ref(issue_str)?;
+    close_issue(&issue_ref)?;
+
+    println!("Closed GitHub issue: {}", issue_str);
     Ok(())
 }
 
@@ -278,6 +304,7 @@ mod tests {
             index: 1,
             status: 1,
             comment: None,
+            close_issue: false,
         };
         handle_donecmd(&conn, &done_cmd).unwrap();
         let item_id = cache::read(&conn, 1).unwrap().unwrap();
@@ -293,6 +320,7 @@ mod tests {
             index: 1,
             status: 2,
             comment: None,
+            close_issue: false,
         };
         handle_donecmd(&conn, &done_cmd).unwrap();
         let updated_item = get_item(&conn, item_id).unwrap();
@@ -313,6 +341,7 @@ mod tests {
             index: 1,
             status: 1,
             comment: Some("Added extra analysis section".to_string()),
+            close_issue: false,
         };
         handle_donecmd(&conn, &done_cmd).unwrap();
         let item_id = cache::read(&conn, 1).unwrap().unwrap();
@@ -412,6 +441,7 @@ mod tests {
             index: 1,
             status: 1,
             comment: Some("Discussed sprint goals".to_string()),
+            close_issue: false,
         };
         let result = handle_donecmd(&conn, &done_cmd);
         assert!(result.is_ok());
@@ -431,6 +461,7 @@ mod tests {
             index: 1,
             status: 1,
             comment: None,
+            close_issue: false,
         };
         let result = handle_donecmd(&conn, &done_cmd2);
         assert!(result.is_err());

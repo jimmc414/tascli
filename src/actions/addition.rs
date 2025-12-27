@@ -18,11 +18,18 @@ use crate::{
             RECORD,
             TASK,
         },
+        link::add_link,
         user::get_user_by_name,
     },
+    github::{get_issue, is_gh_available, parse_issue_ref},
 };
 
 pub fn handle_taskcmd(conn: &Connection, ctx: &Context, cmd: &TaskCommand) -> Result<(), String> {
+    // Handle --from-issue flag
+    if let Some(ref issue_str) = cmd.from_issue {
+        return handle_from_issue(conn, ctx, cmd, issue_str);
+    }
+
     let content = cmd.content.clone();
     let target_timestr = cmd.timestr.clone().unwrap_or_else(|| "today".to_string());
     let category: String = cmd
@@ -112,6 +119,95 @@ pub fn handle_recordcmd(conn: &Connection, cmd: &RecordCommand) -> Result<(), St
     Ok(())
 }
 
+/// Handle --from-issue flag: create task from GitHub issue
+fn handle_from_issue(
+    conn: &Connection,
+    ctx: &Context,
+    cmd: &TaskCommand,
+    issue_str: &str,
+) -> Result<(), String> {
+    // Check gh is available
+    if !is_gh_available() {
+        return Err(
+            "GitHub CLI (gh) is not installed or not authenticated. Run 'gh auth login' first."
+                .to_string(),
+        );
+    }
+
+    // Parse issue reference
+    let issue_ref = parse_issue_ref(issue_str)?;
+
+    // Fetch issue details
+    let issue = get_issue(&issue_ref)?;
+
+    if issue.state == "CLOSED" {
+        return Err(format!("Issue {} is already closed", issue_str));
+    }
+
+    // Use issue title as task content, or allow override via cmd.content if provided
+    let content = if cmd.content.is_empty() || cmd.content == issue_str {
+        issue.title.clone()
+    } else {
+        cmd.content.clone()
+    };
+
+    let target_timestr = cmd.timestr.clone().unwrap_or_else(|| "today".to_string());
+    let category = cmd
+        .category
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
+
+    // Validate project if specified
+    if let Some(ref project_name) = cmd.project {
+        if get_project(project_name).is_none() {
+            return Err(format!(
+                "Project '{}' not found in config. Add it to ~/.config/tascli/config.json",
+                project_name
+            ));
+        }
+    }
+
+    // Resolve assignee username to ID if provided
+    let assignee_id = if let Some(ref assignee_name) = cmd.assignee {
+        let user = get_user_by_name(conn, assignee_name)?
+            .ok_or_else(|| format!("User '{}' not found", assignee_name))?;
+        Some(user.id)
+    } else {
+        None
+    };
+
+    // Create task with target time
+    let target_time = timestr::to_unix_epoch(&target_timestr)?;
+    let mut new_task =
+        Item::with_target_time(TASK.to_string(), category, content, Some(target_time));
+    new_task.reminder_days = cmd.reminder;
+    new_task.project = cmd.project.clone();
+    new_task.owner_id = Some(ctx.current_user_id);
+    new_task.assignee_id = assignee_id;
+    new_task.namespace_id = Some(ctx.current_namespace_id);
+    new_task.priority = cmd.priority;
+    new_task.estimate_minutes = cmd.estimate;
+    new_task.github_issue = Some(issue_str.to_string());
+
+    let task_id = insert_item(conn, &new_task).map_err(|e| e.to_string())?;
+
+    // Auto-link the issue
+    add_link(
+        conn,
+        task_id,
+        "issue",
+        issue_str,
+        Some(&issue.title),
+        Some(ctx.current_user_id),
+    )?;
+
+    display::print_bold("Created task from GitHub issue:");
+    display::print_items(&[new_task], false, false);
+    println!("  Linked: {}", issue.url);
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -136,6 +232,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         }
     }
 
@@ -166,6 +263,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         };
         let (conn, _temp_file) = get_test_conn();
         let ctx = Context::default_from_db(&conn).unwrap();
@@ -197,6 +295,7 @@ mod tests {
             priority: Some(0), // high
             estimate: Some(120), // 2 hours
             assignee: None,
+            from_issue: None,
         };
         let (conn, _temp_file) = get_test_conn();
         let ctx = Context::default_from_db(&conn).unwrap();
@@ -243,6 +342,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         };
         handle_taskcmd(&conn, &ctx, &daily).unwrap();
 
@@ -255,6 +355,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         };
         handle_taskcmd(&conn, &ctx, &weekly).unwrap();
 
@@ -267,6 +368,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         };
         handle_taskcmd(&conn, &ctx, &monthly).unwrap();
 
@@ -307,6 +409,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         };
         handle_taskcmd(&conn, &ctx, &regular_task).unwrap();
 
@@ -319,6 +422,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         };
         handle_taskcmd(&conn, &ctx, &recurring_task).unwrap();
 
@@ -343,6 +447,7 @@ mod tests {
             priority: None,
             estimate: None,
             assignee: None,
+            from_issue: None,
         };
         let (conn, _temp_file) = get_test_conn();
         let ctx = Context::default_from_db(&conn).unwrap();

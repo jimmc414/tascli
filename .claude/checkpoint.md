@@ -1,36 +1,43 @@
 # Checkpoint: Multi-Tenant CTM Implementation
 
 **Date:** 2025-12-27
-**Status:** Phases 1-6 COMPLETE, ready for Phase 7
+**Status:** Phases 1-7 COMPLETE, ready for Phase 8
 
 ---
 
 ## Completed This Session
 
-### Phase 6: Reporting Commands ✓
-- Created `src/actions/reporting.rs` - Team, workload, stats handlers
-- Added TeamCommand, WorkloadCommand, StatsCommand to `src/args/parser.rs`
-- Added routing in `src/actions/handler.rs` for new commands
-- Added serde_json dependency to `Cargo.toml`
-- Exported reporting module in `src/actions/mod.rs`
+### Phase 7: GitHub Integration ✓
+- Created `src/github/mod.rs` - Module declaration
+- Created `src/github/api.rs` - gh CLI wrapper with:
+  - `IssueRef` struct for parsing `owner/repo#number` format
+  - `GitHubIssue` struct for issue data
+  - `parse_issue_ref()` - Parse issue references
+  - `is_gh_available()` - Check gh CLI availability
+  - `get_issue()` - Fetch issue details via gh CLI
+  - `close_issue()` - Close issues via gh CLI
+- Added `--from-issue` flag to TaskCommand in `src/args/parser.rs`
+- Added `--close-issue` flag to DoneCommand in `src/args/parser.rs`
+- Added `mod github` to `src/main.rs`
+- Implemented `handle_from_issue()` in `src/actions/addition.rs`
+- Implemented `close_linked_issue()` in `src/actions/modify.rs`
 
 **New commands:**
 ```bash
-ctm team [--json] [--md]         # Who has what tasks
-ctm workload [--user sarah]      # Hours per person
-ctm stats [--days 30]            # Completion rates, overdue
+ctm task --from-issue owner/repo#42    # Create task from GitHub issue
+ctm done 3 --close-issue               # Complete task, close linked issue
 ```
 
-**Output formats:**
-- Default: Colored text tables
-- `--json`: Machine-readable JSON
-- `--md`: Markdown tables
-
-**All 133 tests pass.**
+**All 143 tests pass.**
 
 ---
 
 ## Previously Completed
+
+### Phase 6: Reporting Commands ✓
+- Created `src/actions/reporting.rs` - Team, workload, stats handlers
+- Commands: `ctm team`, `ctm workload`, `ctm stats`
+- Output formats: Default text, `--json`, `--md`
 
 ### Phase 1: Schema v5 Migration ✓
 - Updated `SCHEMA_VERSION` from 4 to 5 in `src/db/conn.rs`
@@ -87,24 +94,25 @@ ctm stats [--days 30]            # Completion rates, overdue
 | 4 | Task Enhancements | COMPLETE |
 | 5 | Notes/Show/Claim/Link | COMPLETE |
 | 6 | Reporting Commands | COMPLETE |
-| 7 | GitHub Integration | Not started |
+| 7 | GitHub Integration | COMPLETE |
 | 8 | /work + /standup | Not started |
 
 ---
 
-## Files Created in Phase 6
+## Files Created in Phase 7
 
 ```
-src/actions/reporting.rs        # Team, workload, stats handlers
+src/github/mod.rs               # Module declaration
+src/github/api.rs               # gh CLI wrapper
 ```
 
-## Files Modified in Phase 6
+## Files Modified in Phase 7
 
 ```
-src/args/parser.rs              # Added TeamCommand, WorkloadCommand, StatsCommand
-src/actions/handler.rs          # Route new commands
-src/actions/mod.rs              # Export reporting module
-Cargo.toml                      # Added serde_json dependency
+src/main.rs                     # Added mod github
+src/args/parser.rs              # Added --from-issue and --close-issue flags
+src/actions/addition.rs         # handle_from_issue() implementation
+src/actions/modify.rs           # close_linked_issue() implementation
 ```
 
 ---
@@ -133,8 +141,6 @@ audit_log (id, item_id, table_name, action, field_name, old_value, new_value, cr
 
 ## Next Action
 
-Start Phase 7: GitHub Integration
-- Create `src/github/mod.rs` - Module structure
-- Create `src/github/api.rs` - gh CLI wrapper
-- Add `--from-issue` flag to task command
-- Add `--close-issue` flag to done command
+Start Phase 8: /work + /standup
+- Modify `.claude/commands/work.md` - Enhanced /work context
+- Create `.claude/commands/standup.md` - Standup generation

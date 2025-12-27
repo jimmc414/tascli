@@ -3,6 +3,7 @@ mod args;
 mod config;
 mod context;
 mod db;
+mod github;
 mod utils;
 
 use std::process::exit;
